@@ -1,0 +1,16 @@
+{
+  "name": "afiyet-mono",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:tablet": "npm run dev --workspace=apps/pwa-app -- --mode tablet",
+    "dev:dashboard": "npm run dev --workspace=apps/pwa-app -- --mode dashboard",
+    "build:tablet": "npm run build:tablet --workspace=apps/pwa-app",
+    "build:dashboard": "npm run build:dashboard --workspace=apps/pwa-app",
+    "install:all": "npm install"
+  }
+}

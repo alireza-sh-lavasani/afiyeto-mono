@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Afiyet Clinical App</title>
+    <style>
+      /* Inline critical CSS for instantaneous rendering of the splash screen */
+      :root {
+        --bg-color: #020617; /* slate-950 */
+        --card-color: #0f172a; /* slate-900 */
+        --accent-color: #0ea5e9; /* sky-500 */
+        --skeleton-color: #1e293b; /* slate-800 */
+      }
+      body {
+        margin: 0;
+        background-color: var(--bg-color);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        color: #f8fafc;
+        overflow: hidden;
+      }
+      #root {
+        width: 100vw;
+        height: 100vh;
+      }
+      .splash-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+      }
+      .splash-header {
+        height: 64px;
+        background-color: var(--card-color);
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+      }
+      .splash-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        background-color: var(--accent-color);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+      .logo-text {
+        width: 100px;
+        height: 18px;
+        background-color: var(--skeleton-color);
+        border-radius: 4px;
+      }
+      .splash-body {
+        display: flex;
+        flex: 1;
+      }
+      .splash-sidebar {
+        width: 240px;
+        background-color: var(--card-color);
+        border-right: 1px solid #1e293b;
+        padding: 24px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      @media (max-width: 768px) {
+        .splash-sidebar {
+          display: none;
+        }
+      }
+      .sidebar-item {
+        height: 40px;
+        background-color: var(--skeleton-color);
+        border-radius: 6px;
+      }
+      .splash-content {
+        flex: 1;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        overflow-y: auto;
+      }
+      .content-header {
+        height: 36px;
+        width: 200px;
+        background-color: var(--skeleton-color);
+        border-radius: 6px;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+      }
+      .skeleton-card {
+        height: 180px;
+        background-color: var(--card-color);
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .skeleton-line {
+        height: 16px;
+        background-color: var(--skeleton-color);
+        border-radius: 4px;
+      }
+      .skeleton-line.short {
+        width: 60%;
+      }
+      .skeleton-line.medium {
+        width: 80%;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.6;
+          transform: scale(0.95);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Hardcoded splash template that matches the React layout perfectly -->
+      <div class="splash-container">
+        <header class="splash-header">
+          <div class="splash-logo">
+            <div class="logo-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </div>
+            <div class="logo-text"></div>
+          </div>
+        </header>
+        <div class="splash-body">
+          <aside class="splash-sidebar">
+            <div class="sidebar-item"></div>
+            <div class="sidebar-item"></div>
+            <div class="sidebar-item"></div>
+            <div class="sidebar-item"></div>
+          </aside>
+          <main class="splash-content">
+            <div class="content-header"></div>
+            <div class="grid-container">
+              <div class="skeleton-card">
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line medium"></div>
+              </div>
+              <div class="skeleton-card">
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line medium"></div>
+              </div>
+              <div class="skeleton-card">
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line medium"></div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

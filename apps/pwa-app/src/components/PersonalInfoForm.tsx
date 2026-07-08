@@ -129,38 +129,38 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
+    <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl p-6 md:p-8 shadow-xl">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6 border-b border-slate-800 pb-5">
+      <div className="flex items-center gap-4 mb-6 border-b border-border pb-5">
         <button 
           onClick={() => navigate({ to: '/' })}
-          className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-100"
+          className="p-2 rounded-lg bg-secondary hover:bg-slate-700 transition-colors text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex flex-col">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
             {mode === 'create' ? t('personalInfo.formTitle') : 'Update Patient Profile'}
           </h2>
-          <span className="text-xs text-slate-400">Clinical Demographic Form</span>
+          <span className="text-xs text-muted-foreground">Clinical Demographic Form</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         
         {/* Photo Section */}
-        <div className="flex flex-col items-center sm:flex-row gap-6 bg-slate-950/40 p-5 rounded-2xl border border-slate-800/80">
-          <div className="relative h-28 w-28 rounded-full border border-slate-700/80 overflow-hidden bg-slate-800 flex items-center justify-center shrink-0">
+        <div className="flex flex-col items-center sm:flex-row gap-6 bg-background/40 p-5 rounded-2xl border border-border/80">
+          <div className="relative h-28 w-28 rounded-full border border-border/80 overflow-hidden bg-secondary flex items-center justify-center shrink-0">
             {capturedImage ? (
               <img src={capturedImage} alt="Patient Avatar" className="h-full w-full object-cover" />
             ) : (
-              <User className="h-12 w-12 text-slate-600" />
+              <User className="h-12 w-12 text-muted-foreground/60" />
             )}
           </div>
 
           <div className="flex-1 flex flex-col gap-2.5 text-center sm:text-left">
-            <span className="font-semibold text-sm text-slate-300">Patient Portrait Image</span>
-            <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
+            <span className="font-semibold text-sm text-foreground">Patient Portrait Image</span>
+            <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
               Capture a face photograph using the tablet camera to store in the local offline database record.
             </p>
             <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
@@ -168,7 +168,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                 <button
                   type="button"
                   onClick={startCamera}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs font-semibold hover:bg-slate-700 text-slate-300 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary border border-border text-xs font-semibold hover:bg-slate-700 text-foreground transition-all"
                 >
                   <Camera className="h-3.5 w-3.5" />
                   <span>{capturedImage ? 'Recapture' : 'Take Photo'}</span>
@@ -178,14 +178,14 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                   <button
                     type="button"
                     onClick={capturePhoto}
-                    className="px-3 py-1.5 rounded-lg bg-sky-500 text-xs font-bold hover:bg-sky-600 text-white transition-all shadow-md shadow-sky-500/10"
+                    className="px-3 py-1.5 rounded-lg bg-primary text-xs font-bold hover:bg-primary/90 text-white transition-all shadow-md shadow-primary/10"
                   >
                     Snap Frame
                   </button>
                   <button
                     type="button"
                     onClick={stopCamera}
-                    className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:bg-slate-700 text-slate-300 transition-all"
+                    className="px-3 py-1.5 rounded-lg bg-secondary border border-border text-xs hover:bg-slate-700 text-foreground transition-all"
                   >
                     Cancel
                   </button>
@@ -206,9 +206,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
         {/* Video feed overlay */}
         {showCamera && (
-          <div className="flex flex-col items-center gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-            <video ref={videoRef} autoPlay playsInline className="h-60 w-60 rounded-xl bg-slate-900 object-cover border border-slate-700" />
-            <span className="text-[10px] text-slate-500 animate-pulse">Live stream feeding...</span>
+          <div className="flex flex-col items-center gap-4 bg-background p-4 rounded-2xl border border-border">
+            <video ref={videoRef} autoPlay playsInline className="h-60 w-60 rounded-xl bg-card object-cover border border-border" />
+            <span className="text-[10px] text-muted-foreground animate-pulse">Live stream feeding...</span>
           </div>
         )}
 
@@ -218,7 +218,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
           <div className="space-y-4">
             {/* Gov ID */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('personalInfo.uniqueGovID')}
               </label>
               <Controller
@@ -230,7 +230,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onBlur={onBlur}
                     onChange={onChange}
                     value={value}
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                    className="bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-slate-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                     placeholder="Enter National ID Number"
                   />
                 )}
@@ -239,7 +239,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Full Name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex items-center">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
                 <span>{t('personalInfo.fullName')}</span>
                 <span className="text-red-500 ml-1 font-bold">*</span>
               </label>
@@ -253,10 +253,10 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onBlur={onBlur}
                     onChange={onChange}
                     value={value}
-                    className={`bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 transition-all ${
+                    className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-slate-600 focus:outline-none focus:ring-1 transition-all ${
                       errors.fullName 
                         ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-slate-800 focus:border-sky-500 focus:ring-sky-500'
+                        : 'border-border focus:border-primary focus:ring-primary'
                     }`}
                     placeholder="Enter Full Name"
                   />
@@ -269,7 +269,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Birth Date */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex items-center">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
                 <span>{t('personalInfo.birthDate')}</span>
                 <span className="text-red-500 ml-1 font-bold">*</span>
               </label>
@@ -283,10 +283,10 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onBlur={onBlur}
                     onChange={onChange}
                     value={value}
-                    className={`bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-1 transition-all ${
+                    className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 transition-all ${
                       errors.birthDate 
                         ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-slate-800 focus:border-sky-500 focus:ring-sky-500'
+                        : 'border-border focus:border-primary focus:ring-primary'
                     }`}
                   />
                 )}
@@ -298,7 +298,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Gender Selection */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex items-center">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
                 <span>{t('personalInfo.gender')}</span>
                 <span className="text-red-500 ml-1 font-bold">*</span>
               </label>
@@ -310,8 +310,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                   <div className="grid grid-cols-2 gap-3">
                     <label className={`flex items-center justify-center gap-2 border rounded-xl py-3 px-4 text-sm font-semibold cursor-pointer transition-all ${
                       value === 'male'
-                        ? 'bg-sky-500/10 border-sky-500/50 text-sky-400 shadow-md shadow-sky-500/5'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                        ? 'bg-primary/10 border-sky-500/50 text-primary shadow-md shadow-sky-500/5'
+                        : 'border-border bg-background/40 text-muted-foreground hover:border-border'
                     }`}>
                       <input 
                         type="radio" 
@@ -327,7 +327,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     <label className={`flex items-center justify-center gap-2 border rounded-xl py-3 px-4 text-sm font-semibold cursor-pointer transition-all ${
                       value === 'female'
                         ? 'bg-pink-500/10 border-pink-500/50 text-pink-400 shadow-md shadow-pink-500/5'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                        : 'border-border bg-background/40 text-muted-foreground hover:border-border'
                     }`}>
                       <input 
                         type="radio" 
@@ -349,7 +349,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
           <div className="space-y-4">
             {/* Emergency Contact */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('personalInfo.emmergencyContact')}
               </label>
               <Controller
@@ -361,7 +361,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onBlur={onBlur}
                     onChange={onChange}
                     value={value}
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                    className="bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-slate-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                     placeholder="Enter phone number"
                   />
                 )}
@@ -370,7 +370,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Education select */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('personalInfo.education')}
               </label>
               <Controller
@@ -380,7 +380,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                   <select
                     value={value}
                     onChange={onChange}
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                    className="bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                   >
                     <option value="">{t('personalInfo.education')}</option>
                     <option value="None">{t('personalInfo.educationLevels.none')}</option>
@@ -395,7 +395,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Marital Status */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex items-center">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
                 <span>{t('personalInfo.maritalStatus')}</span>
                 <span className="text-red-500 ml-1 font-bold">*</span>
               </label>
@@ -407,8 +407,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                   <div className="grid grid-cols-2 gap-3">
                     <label className={`flex items-center justify-center gap-2 border rounded-xl py-3 px-4 text-sm font-semibold cursor-pointer transition-all ${
                       value === 'single'
-                        ? 'bg-sky-500/10 border-sky-500/50 text-sky-400 shadow-md shadow-sky-500/5'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                        ? 'bg-primary/10 border-sky-500/50 text-primary shadow-md shadow-sky-500/5'
+                        : 'border-border bg-background/40 text-muted-foreground hover:border-border'
                     }`}>
                       <input 
                         type="radio" 
@@ -423,8 +423,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
                     <label className={`flex items-center justify-center gap-2 border rounded-xl py-3 px-4 text-sm font-semibold cursor-pointer transition-all ${
                       value === 'married'
-                        ? 'bg-sky-500/10 border-sky-500/50 text-sky-400 shadow-md shadow-sky-500/5'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                        ? 'bg-primary/10 border-sky-500/50 text-primary shadow-md shadow-sky-500/5'
+                        : 'border-border bg-background/40 text-muted-foreground hover:border-border'
                     }`}>
                       <input 
                         type="radio" 
@@ -444,11 +444,11 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         </div>
 
         {/* Submit Action */}
-        <div className="pt-4 border-t border-slate-800 flex justify-end">
+        <div className="pt-4 border-t border-border flex justify-end">
           <button
             type="submit"
             disabled={isSubmitting || !birthDate}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-sky-500 text-white font-bold rounded-xl hover:bg-sky-600 disabled:opacity-40 disabled:hover:bg-sky-500 transition-all shadow-lg shadow-sky-500/20"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 disabled:opacity-40 disabled:hover:bg-primary transition-all shadow-lg shadow-primary/20"
           >
             {isSubmitting ? (
               <RefreshCw className="h-4 w-4 animate-spin" />

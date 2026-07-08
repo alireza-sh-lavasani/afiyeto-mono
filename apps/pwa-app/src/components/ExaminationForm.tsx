@@ -170,39 +170,39 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
   ];
 
   return (
-    <div className="max-w-5xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
+    <div className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-6 md:p-8 shadow-xl">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6 border-b border-slate-800 pb-5">
+      <div className="flex items-center gap-4 mb-6 border-b border-border pb-5">
         <button 
           onClick={() => navigate({ to: `/patients/${patientId}/visits` })}
-          className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-100"
+          className="p-2 rounded-lg bg-secondary hover:bg-slate-700 transition-colors text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex flex-col">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
             {mode === 'create' ? t('examinationForm.formTitle') : 'Update Visit Records'}
           </h2>
-          <span className="text-xs text-slate-400">Clinical Vitals and Symptoms Assessment</span>
+          <span className="text-xs text-muted-foreground">Clinical Vitals and Symptoms Assessment</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         
         {/* Location Section */}
-        <div className="bg-slate-950/40 border border-slate-850 p-6 rounded-2xl space-y-4">
-          <div className="flex items-center gap-2 text-sky-400">
+        <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
+          <div className="flex items-center gap-2 text-primary">
             <MapPin className="h-5 w-5" />
-            <h3 className="font-bold text-slate-200">{t('examinationForm.locationCard.title')}</h3>
+            <h3 className="font-bold text-foreground">{t('examinationForm.locationCard.title')}</h3>
           </div>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             {t('examinationForm.locationCard.description')}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-2">
             {/* Zoba Dropdown */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.locationCard.zoba.label')}
               </label>
               <Controller
@@ -218,8 +218,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                       setSelectedZoba(v);
                       setValue('subZoba', ''); // Reset sub-zoba
                     }}
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.zoba ? 'border-red-500/80 focus:ring-red-500' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.zoba ? 'border-red-500/80 focus:ring-red-500' : 'border-border focus:border-primary'
                     }`}
                   >
                     <option value="">{t('examinationForm.locationCard.zoba.button')}</option>
@@ -233,7 +233,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Sub Zoba Dropdown */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.locationCard.subZoba.label')}
               </label>
               <Controller
@@ -245,8 +245,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     value={value}
                     onChange={onChange}
                     disabled={!selectedZoba}
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all disabled:opacity-40 ${
-                      errors.subZoba ? 'border-red-500/80 focus:ring-red-500' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all disabled:opacity-40 ${
+                      errors.subZoba ? 'border-red-500/80 focus:ring-red-500' : 'border-border focus:border-primary'
                     }`}
                   >
                     <option value="">{t('examinationForm.locationCard.subZoba.button')}</option>
@@ -260,7 +260,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Local District */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.locationCard.localDistrict')}
               </label>
               <Controller
@@ -274,8 +274,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="Enter Local District"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.localDistrict ? 'border-red-500/80 focus:ring-red-500' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.localDistrict ? 'border-red-500/80 focus:ring-red-500' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -284,7 +284,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Longitude */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.locationCard.longitude')}
               </label>
               <Controller
@@ -298,8 +298,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="0.00"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.longitude ? 'border-red-500/80 focus:ring-red-500' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.longitude ? 'border-red-500/80 focus:ring-red-500' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -308,7 +308,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Latitude */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.locationCard.latitude')}
               </label>
               <Controller
@@ -322,8 +322,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="0.00"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.latitude ? 'border-red-500/80 focus:ring-red-500' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.latitude ? 'border-red-500/80 focus:ring-red-500' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -332,7 +332,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Address */}
             <div className="flex flex-col gap-1.5 md:col-span-2 lg:col-span-3">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.locationCard.address')}
               </label>
               <Controller
@@ -346,8 +346,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="Full Clinical Address"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.address ? 'border-red-500/80 focus:ring-red-500' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.address ? 'border-red-500/80 focus:ring-red-500' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -357,16 +357,16 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
         </div>
 
         {/* Vital Signs Section */}
-        <div className="bg-slate-950/40 border border-slate-850 p-6 rounded-2xl space-y-4">
+        <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
           <div className="flex items-center gap-2 text-emerald-400">
             <Activity className="h-5 w-5" />
-            <h3 className="font-bold text-slate-200">{t('examinationForm.vitalsCard.title')}</h3>
+            <h3 className="font-bold text-foreground">{t('examinationForm.vitalsCard.title')}</h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pt-2">
             {/* Temperature */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.vitalsCard.temperature')} (°C)
               </label>
               <Controller
@@ -380,8 +380,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="36.5"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.temperature ? 'border-red-500/80' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.temperature ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -390,7 +390,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* BP Systolic */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.vitalsCard.bloodPressureSystolic')} (mmHg)
               </label>
               <Controller
@@ -404,8 +404,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="120"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.bloodPressureSystolic ? 'border-red-500/80' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.bloodPressureSystolic ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -414,7 +414,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* BP Diastolic */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.vitalsCard.bloodPressureDiastolic')} (mmHg)
               </label>
               <Controller
@@ -428,8 +428,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="80"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.bloodPressureDiastolic ? 'border-red-500/80' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.bloodPressureDiastolic ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -438,7 +438,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Heart Rate */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.vitalsCard.heartRate')} (bpm)
               </label>
               <Controller
@@ -452,8 +452,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="75"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.heartRate ? 'border-red-500/80' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.heartRate ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -462,7 +462,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Respiratory Rate */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.vitalsCard.respiratoryRate')} (breath/min)
               </label>
               <Controller
@@ -476,8 +476,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="16"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.respiratoryRate ? 'border-red-500/80' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.respiratoryRate ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -486,7 +486,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Oxygen Saturation */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.vitalsCard.oxygenSaturation')} (%)
               </label>
               <Controller
@@ -500,8 +500,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="98"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.oxygenSaturation ? 'border-red-500/80' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.oxygenSaturation ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -510,7 +510,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
             {/* Blood Sugar */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('examinationForm.vitalsCard.bloodSugar')} (mg/dl)
               </label>
               <Controller
@@ -524,8 +524,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     onChange={onChange}
                     value={value}
                     placeholder="95"
-                    className={`bg-slate-950 border rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none transition-all ${
-                      errors.bloodSugar ? 'border-red-500/80' : 'border-slate-800 focus:border-sky-500'
+                    className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
+                      errors.bloodSugar ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
                   />
                 )}
@@ -535,16 +535,16 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
         </div>
 
         {/* Symptoms Checklist Section */}
-        <div className="bg-slate-950/40 border border-slate-850 p-6 rounded-2xl space-y-4">
+        <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
           <div className="flex items-center gap-2 text-amber-500">
             <ShieldAlert className="h-5 w-5" />
-            <h3 className="font-bold text-slate-200">{t('examinationForm.currentCondition.title')}</h3>
+            <h3 className="font-bold text-foreground">{t('examinationForm.currentCondition.title')}</h3>
           </div>
 
           <div className="space-y-6 pt-2">
             {symptomGroups.map((group, groupIdx) => (
-              <div key={groupIdx} className="border-b border-slate-800 pb-4 last:border-b-0 last:pb-0">
-                <h4 className="text-sm font-semibold text-sky-400 mb-3">{group.title}</h4>
+              <div key={groupIdx} className="border-b border-border pb-4 last:border-b-0 last:pb-0">
+                <h4 className="text-sm font-semibold text-primary mb-3">{group.title}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {group.symptoms.map((symp) => (
                     <Controller
@@ -555,13 +555,13 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                         <label className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
                           value 
                             ? 'bg-amber-500/10 border-amber-500/40 text-amber-400' 
-                            : 'bg-slate-950/20 border-slate-800/80 text-slate-400 hover:border-slate-700'
+                            : 'bg-background/20 border-border/80 text-muted-foreground hover:border-border'
                         }`}>
                           <input
                             type="checkbox"
                             checked={Boolean(value)}
                             onChange={(e) => onChange(e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-950"
+                            className="h-4 w-4 rounded border-border bg-card text-primary focus:ring-primary focus:ring-offset-slate-950"
                           />
                           <span className="select-none">{symp.label}</span>
                         </label>
@@ -575,11 +575,11 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
         </div>
 
         {/* Submit Form */}
-        <div className="pt-4 border-t border-slate-800 flex justify-end">
+        <div className="pt-4 border-t border-border flex justify-end">
           <button
             type="submit"
             disabled={isSubmitting || (mode === 'edit' && !isDirty)}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-sky-500 text-white font-bold rounded-xl hover:bg-sky-600 disabled:opacity-40 disabled:hover:bg-sky-500 transition-all shadow-lg shadow-sky-500/20"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 disabled:opacity-40 disabled:hover:bg-primary transition-all shadow-lg shadow-primary/20"
           >
             {isSubmitting ? (
               <RefreshCw className="h-4 w-4 animate-spin" />

@@ -97,88 +97,88 @@ export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
   ];
 
   if (!examination) {
-    return <div className="text-center py-6 text-slate-400">Loading visit summary details...</div>;
+    return <div className="text-center py-6 text-muted-foreground">Loading visit summary details...</div>;
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl space-y-8">
+    <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-xl space-y-8">
       {/* 1. Location details */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sky-400 border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-2 text-primary border-b border-border pb-3">
           <MapPin className="h-5 w-5" />
-          <h3 className="font-bold text-lg text-slate-200">{t('examinationForm.locationCard.title')}</h3>
+          <h3 className="font-bold text-lg text-foreground">{t('examinationForm.locationCard.title')}</h3>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm">
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.locationCard.zoba.label')}</span>
-            <span className="text-slate-200 font-medium">{examination.zoba || '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.locationCard.zoba.label')}</span>
+            <span className="text-foreground font-medium">{examination.zoba || '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.locationCard.subZoba.label')}</span>
-            <span className="text-slate-200 font-medium">{examination.subZoba || '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.locationCard.subZoba.label')}</span>
+            <span className="text-foreground font-medium">{examination.subZoba || '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.locationCard.localDistrict')}</span>
-            <span className="text-slate-200 font-medium">{examination.localDistrict || '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.locationCard.localDistrict')}</span>
+            <span className="text-foreground font-medium">{examination.localDistrict || '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.locationCard.longitude')}</span>
-            <span className="text-slate-200 font-medium">{examination.longitude || '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.locationCard.longitude')}</span>
+            <span className="text-foreground font-medium">{examination.longitude || '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.locationCard.latitude')}</span>
-            <span className="text-slate-200 font-medium">{examination.latitude || '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.locationCard.latitude')}</span>
+            <span className="text-foreground font-medium">{examination.latitude || '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5 col-span-2 md:col-span-3">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.locationCard.address')}</span>
-            <span className="text-slate-200 font-medium">{examination.address || '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.locationCard.address')}</span>
+            <span className="text-foreground font-medium">{examination.address || '-'}</span>
           </div>
         </div>
       </div>
 
       {/* 2. Vitals details */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-emerald-400 border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-2 text-emerald-400 border-b border-border pb-3">
           <Activity className="h-5 w-5" />
-          <h3 className="font-bold text-lg text-slate-200">{t('examinationForm.vitalsCard.title')}</h3>
+          <h3 className="font-bold text-lg text-foreground">{t('examinationForm.vitalsCard.title')}</h3>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 text-sm">
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.vitalsCard.temperature')}</span>
-            <span className="text-slate-200 font-medium">{examination.temperature ? `${examination.temperature} °C` : '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.vitalsCard.temperature')}</span>
+            <span className="text-foreground font-medium">{examination.temperature ? `${examination.temperature} °C` : '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.vitalsCard.bloodPressureSystolic')}</span>
-            <span className="text-slate-200 font-medium">{examination.bloodPressureSystolic ? `${examination.bloodPressureSystolic} mmHg` : '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.vitalsCard.bloodPressureSystolic')}</span>
+            <span className="text-foreground font-medium">{examination.bloodPressureSystolic ? `${examination.bloodPressureSystolic} mmHg` : '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.vitalsCard.bloodPressureDiastolic')}</span>
-            <span className="text-slate-200 font-medium">{examination.bloodPressureDiastolic ? `${examination.bloodPressureDiastolic} mmHg` : '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.vitalsCard.bloodPressureDiastolic')}</span>
+            <span className="text-foreground font-medium">{examination.bloodPressureDiastolic ? `${examination.bloodPressureDiastolic} mmHg` : '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.vitalsCard.heartRate')}</span>
-            <span className="text-slate-200 font-medium">{examination.heartRate ? `${examination.heartRate} bpm` : '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.vitalsCard.heartRate')}</span>
+            <span className="text-foreground font-medium">{examination.heartRate ? `${examination.heartRate} bpm` : '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.vitalsCard.respiratoryRate')}</span>
-            <span className="text-slate-200 font-medium">{examination.respiratoryRate ? `${examination.respiratoryRate} breath/min` : '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.vitalsCard.respiratoryRate')}</span>
+            <span className="text-foreground font-medium">{examination.respiratoryRate ? `${examination.respiratoryRate} breath/min` : '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.vitalsCard.oxygenSaturation')}</span>
-            <span className="text-slate-200 font-medium">{examination.oxygenSaturation ? `${examination.oxygenSaturation} %` : '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.vitalsCard.oxygenSaturation')}</span>
+            <span className="text-foreground font-medium">{examination.oxygenSaturation ? `${examination.oxygenSaturation} %` : '-'}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-500 font-semibold">{t('examinationForm.vitalsCard.bloodSugar')}</span>
-            <span className="text-slate-200 font-medium">{examination.bloodSugar ? `${examination.bloodSugar} mg/dl` : '-'}</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t('examinationForm.vitalsCard.bloodSugar')}</span>
+            <span className="text-foreground font-medium">{examination.bloodSugar ? `${examination.bloodSugar} mg/dl` : '-'}</span>
           </div>
         </div>
       </div>
 
       {/* 3. Symptoms checked */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-amber-500 border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-2 text-amber-500 border-b border-border pb-3">
           <ShieldAlert className="h-5 w-5" />
-          <h3 className="font-bold text-lg text-slate-200">{t('examinationForm.currentCondition.title')}</h3>
+          <h3 className="font-bold text-lg text-foreground">{t('examinationForm.currentCondition.title')}</h3>
         </div>
 
         <div className="space-y-6 pt-2">
@@ -188,7 +188,7 @@ export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
 
             return (
               <div key={idx} className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center justify-between">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wide flex items-center justify-between">
                   <span>{group.title}</span>
                   {checkedCount > 0 && (
                     <span className="text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2 py-0.5 rounded-full font-semibold">
@@ -205,7 +205,7 @@ export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
                         className={`flex items-center gap-3 px-4 py-2 rounded-xl border text-xs font-semibold select-none ${
                           isChecked 
                             ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' 
-                            : 'bg-slate-950/20 border-slate-800/80 text-slate-600'
+                            : 'bg-background/20 border-border/80 text-muted-foreground/60'
                         }`}
                       >
                         {isChecked ? (

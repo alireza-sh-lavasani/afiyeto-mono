@@ -61,24 +61,28 @@ async function handlePatientIdReconciliation(doc: any) {
 export function startCouchDaemon() {
   console.log('[Couch Daemon] Starting background listener on patient changes feed...');
   
-  const feed = patientsDb.follow({
+  const feed = patientsDb.changesReader.start({
     since: 'now',
-    include_docs: true,
+    includeDocs: true,
   });
 
-  feed.on('change', (change) => {
+  feed.on('change', (change: any) => {
     const doc = change.doc;
-    if (doc && doc.type === 'patient' && !doc.patientId && doc.tmpPatientId) {
-      console.log(`[Couch Daemon] Detected patient document needing reconciliation: ${doc._id}`);
-      // Push execution to the sequential async queue
-      queuePromise = queuePromise.then(() => handlePatientIdReconciliation(doc));
+    if (doc) {
+      const rev = change.changes?.[0]?.rev || 'unknown';
+      console.log(`[Couch Daemon] [Change Event] Received update for docId: ${doc._id}, type: ${doc.type || 'unknown'}, rev: ${rev}`);
+      
+      if (doc.type === 'patient' && !doc.patientId && doc.tmpPatientId) {
+        console.log(`[Couch Daemon] [Action Required] Patient document ${doc._id} (tmpPatientId: ${doc.tmpPatientId}) is missing a permanent sequential ID. Enqueuing for reconciliation...`);
+        // Push execution to the sequential async queue
+        queuePromise = queuePromise.then(() => handlePatientIdReconciliation(doc));
+      }
     }
   });
 
-  feed.on('error', (err) => {
+  feed.on('error', (err: any) => {
     console.error('[Couch Daemon] Changes feed encountered an error:', err);
   });
 
-  feed.follow();
   console.log('[Couch Daemon] Background listener is active.');
 }

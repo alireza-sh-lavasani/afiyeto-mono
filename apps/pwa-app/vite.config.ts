@@ -16,8 +16,11 @@ export default defineConfig(({ mode }) => {
         // Only run PWA features in full on the offline tablet
         // Or keep it for both, but configure caching strictly for offline capabilities in tablet mode
         manifest: {
-          name: isTablet ? 'Afiyet Mobile Clinical PWA' : 'Afiyet Clinical Dashboard',
-          short_name: isTablet ? 'Afiyet Tablet' : 'Afiyet Admin',
+          id: '/',
+          start_url: '/',
+          scope: '/',
+          name: isTablet ? 'Barefoot Doctors' : 'Afiyet Clinical Dashboard',
+          short_name: isTablet ? 'Barefoot Doctors' : 'Afiyet Admin',
           description: 'Healthcare platform for rural and underserved areas.',
           theme_color: '#0f172a',
           background_color: '#0f172a',
@@ -65,7 +68,12 @@ export default defineConfig(({ mode }) => {
       'global': 'globalThis',
     },
     server: {
-      port: 3000
+      port: 3000,
+      host: true
+    },
+    preview: {
+      port: 3000,
+      host: true
     }
   };
 });

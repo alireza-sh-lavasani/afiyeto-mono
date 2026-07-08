@@ -99,6 +99,40 @@ async function ensureDesignDocExists() {
 }
 
 /**
+ * Automatically configures CORS on the CouchDB server.
+ */
+async function ensureCouchDbCors() {
+  console.log('[CouchDB] Verifying and configuring CORS settings on target node...');
+  try {
+    const corsConfigs = [
+      { path: 'cors/enable_cors', value: 'true', label: 'Enable CORS' },
+      { path: 'cors/origins', value: '*', label: 'Allow Origins (*)' },
+      { path: 'cors/credentials', value: 'true', label: 'Allow Credentials' },
+      { path: 'cors/methods', value: 'GET, PUT, POST, HEAD, DELETE', label: 'Allowed Methods' },
+      { path: 'cors/headers', value: 'accept, authorization, content-type, origin, referer', label: 'Allowed Headers' }
+    ];
+
+    for (const config of corsConfigs) {
+      const fullPath = `_node/_local/_config/${config.path}`;
+      try {
+        // CouchDB HTTP config values must be sent as double-quoted JSON strings, e.g. '"true"' or '"*"'
+        await couch.request({
+          method: 'PUT',
+          path: fullPath,
+          body: JSON.stringify(config.value)
+        });
+        console.log(`[CouchDB] CORS configuration update: Set ${config.label} to ${config.value}`);
+      } catch (err: any) {
+        console.warn(`[CouchDB] Warning updating CORS configuration at ${config.path}:`, err.message || err);
+      }
+    }
+    console.log('[CouchDB] CouchDB server CORS configuration sequence completed.');
+  } catch (error) {
+    console.error('[CouchDB] Unexpected error during CORS auto-setup:', error);
+  }
+}
+
+/**
  * Initializes database structures and verifies connectivity
  */
 export async function initCouchDb() {
@@ -107,6 +141,9 @@ export async function initCouchDb() {
     // Check credentials and connection via listing DBs
     await couch.db.list();
     console.log('[CouchDB] Connection established successfully.');
+    
+    // Automatically provision CORS on target node
+    await ensureCouchDbCors();
     
     // Ensure core databases exist
     await ensureDbExists(PATIENTS_DB_NAME);

@@ -1,0 +1,21 @@
+services:
+  couchdb:
+    image: couchdb:latest
+    container_name: couchdb
+    restart: always
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=password
+    ports:
+      - "5984:5984"
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    networks:
+      - app-net
+
+volumes:
+  couchdb-data:
+
+networks:
+  app-net:
+    driver: bridge

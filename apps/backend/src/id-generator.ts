@@ -41,7 +41,7 @@ export async function generatePatientId(fullName: string, birthDateIso: string):
     let maxSeq = 999; // Default starting sequence minus one (so the next is 1000)
 
     if (response.rows.length > 0) {
-      const highestKey = response.rows[0].key as [string, string, number];
+      const highestKey = response.rows[0].key as unknown as [string, string, number];
       if (Array.isArray(highestKey) && highestKey.length === 3 && typeof highestKey[2] === 'number') {
         maxSeq = highestKey[2];
       }

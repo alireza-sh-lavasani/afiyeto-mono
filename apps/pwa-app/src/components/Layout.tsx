@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ESupportedLanguages, languagesDisplayNames } from '../languages/language.enums.ts';
-import { TSyncStatus } from '../db/pouchdb.ts';
+import { TSyncStatus, forceManualSync } from '../db/pouchdb.ts';
 import { 
   Activity, 
   Users, 
@@ -28,6 +28,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncStatus, setSyncStatus] = useState<TSyncStatus>(navigator.onLine ? 'synced' : 'offline');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const target = import.meta.env.VITE_APP_TARGET;
   const isTablet = target === 'tablet';
@@ -58,6 +59,26 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
   }, []);
 
+  // Listen to toast messages from the sync engine
+  useEffect(() => {
+    let timer: any;
+    const handleToast = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { type: 'success' | 'error'; message: string };
+      setToast(detail);
+      
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        setToast(null);
+      }, 4000);
+    };
+
+    window.addEventListener('afiyet_sync_toast', handleToast);
+    return () => {
+      window.removeEventListener('afiyet_sync_toast', handleToast);
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
   const handleLanguageChange = (lang: ESupportedLanguages) => {
     i18n.changeLanguage(lang);
     localStorage.setItem('afiyet_lang', lang);
@@ -71,37 +92,64 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     setIsLangMenuOpen(false);
   };
 
-  // Helper to render sync status badge
+  const handleSyncClick = async () => {
+    if (syncStatus === 'syncing') return;
+    try {
+      await forceManualSync();
+    } catch (err) {
+      // Handled inside forceManualSync
+    }
+  };
+
+  // Helper to render sync status badge as a button
   const renderSyncBadge = () => {
+    const baseClasses = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 outline-none";
+    
     switch (syncStatus) {
       case 'syncing':
         return (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-xs font-semibold text-sky-400">
+          <button
+            disabled
+            className={`${baseClasses} bg-sky-500/10 border-sky-500/20 text-sky-400 cursor-not-allowed`}
+            title="Synchronization in progress..."
+          >
             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
             <span>Syncing...</span>
-          </div>
+          </button>
         );
       case 'error':
         return (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-400">
+          <button
+            onClick={handleSyncClick}
+            className={`${baseClasses} bg-red-500/10 border-red-500/20 hover:border-red-500/40 text-red-400 cursor-pointer active:scale-95`}
+            title="Sync error! Click to force manual resync."
+          >
             <AlertTriangle className="h-3.5 w-3.5" />
-            <span>Sync Error</span>
-          </div>
+            <span>Sync Error (Retry)</span>
+          </button>
         );
       case 'offline':
         return (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700/50 text-xs font-semibold text-slate-400">
+          <button
+            onClick={handleSyncClick}
+            className={`${baseClasses} bg-slate-800 border-slate-700/50 hover:border-slate-600 text-slate-400 cursor-pointer active:scale-95`}
+            title="Offline mode. Click to attempt sync reconnect."
+          >
             <WifiOff className="h-3.5 w-3.5" />
-            <span>Offline Mode</span>
-          </div>
+            <span>Offline (Retry)</span>
+          </button>
         );
       case 'synced':
       default:
         return (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400">
+          <button
+            onClick={handleSyncClick}
+            className={`${baseClasses} bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 cursor-pointer active:scale-95`}
+            title="Database synced. Click to force manual resync."
+          >
             <CheckCircle className="h-3.5 w-3.5" />
             <span>Synced</span>
-          </div>
+          </button>
         );
     }
   };
@@ -247,6 +295,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </main>
       </div>
+
+      {/* Toast Notification overlay */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-55 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-0 ${
+          toast.type === 'success' 
+            ? 'bg-slate-900 border-emerald-500/30 text-emerald-400 shadow-emerald-950/20' 
+            : 'bg-slate-900 border-red-500/30 text-red-400 shadow-red-950/20'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle className="h-4 w-4 shrink-0 text-emerald-400" />
+          ) : (
+            <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
+          )}
+          <span className="text-xs font-semibold text-slate-200">{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 };

@@ -44,7 +44,7 @@ async function bootstrap() {
     await app.listen({ port: PORT, host: HOST });
     console.log(`[Backend] Server listening on http://${HOST}:${PORT}`);
   } catch (error) {
-    app.log.error('Bootstrap failed:', error);
+    app.log.error(error as any, 'Bootstrap failed');
     process.exit(1);
   }
 

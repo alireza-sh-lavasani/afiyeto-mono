@@ -36,11 +36,16 @@ const dispatchSyncStatus = () => {
 };
 
 // 3. Initiate native bidirectional synchronization
-const remotePatientsDb = new PouchDB(COUCHDB_PATIENTS_URL);
-const remoteExaminationsDb = new PouchDB(COUCHDB_EXAMINATIONS_URL);
+let remotePatientsDb: any = null;
+let remoteExaminationsDb: any = null;
 
 let patientSync: any;
 let examSync: any;
+
+function initRemoteDbs() {
+  remotePatientsDb = new PouchDB(COUCHDB_PATIENTS_URL);
+  remoteExaminationsDb = new PouchDB(COUCHDB_EXAMINATIONS_URL);
+}
 
 function setupSyncHandlers(syncInstance: any, dbName: string, stateSetter: (state: TSyncStatus) => void) {
   return syncInstance
@@ -77,6 +82,9 @@ export function startLiveSync() {
   if (patientSync) patientSync.cancel();
   if (examSync) examSync.cancel();
 
+  // Fresh remote instances clear browser-cached socket errors/CORS blocks on reconnect
+  initRemoteDbs();
+
   patientSync = PouchDB.sync(patientsDb, remotePatientsDb, {
     live: true,
     retry: true,
@@ -101,6 +109,9 @@ export async function forceManualSync() {
   // 1. Cancel the current background sync instances
   if (patientSync) patientSync.cancel();
   if (examSync) examSync.cancel();
+
+  // Fresh remote instances clear browser-cached socket errors/CORS blocks on reconnect
+  initRemoteDbs();
 
   window.dispatchEvent(new CustomEvent('afiyet_sync_status', { detail: 'syncing' }));
 

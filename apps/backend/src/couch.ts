@@ -105,9 +105,9 @@ async function ensureCouchDbCors() {
   console.log('[CouchDB] Verifying and configuring CORS settings on target node...');
   try {
     const corsConfigs = [
-      { path: 'chttpd/enable_cors', value: 'true', label: 'Enable CORS' },
+      { path: 'chttpd/enable_cors', value: true, label: 'Enable CORS' },
       { path: 'cors/origins', value: '*', label: 'Allow Origins (*)' },
-      { path: 'cors/credentials', value: 'true', label: 'Allow Credentials' },
+      { path: 'cors/credentials', value: true, label: 'Allow Credentials' },
       { path: 'cors/methods', value: 'GET, PUT, POST, HEAD, DELETE', label: 'Allowed Methods' },
       { path: 'cors/headers', value: 'accept, authorization, content-type, origin, referer', label: 'Allowed Headers' }
     ];
@@ -115,11 +115,12 @@ async function ensureCouchDbCors() {
     for (const config of corsConfigs) {
       const fullPath = `_node/_local/_config/${config.path}`;
       try {
-        // CouchDB HTTP config values must be sent as double-quoted JSON strings, e.g. '"true"' or '"*"'
+        // Send string configs as raw text (unquoted) and boolean configs as JSON booleans to prevent CouchDB from writing double quotes in local.ini
+        const body = typeof config.value === 'string' ? config.value : JSON.stringify(config.value);
         await couch.request({
           method: 'PUT',
           path: fullPath,
-          body: JSON.stringify(config.value)
+          body: body
         });
         console.log(`[CouchDB] CORS configuration update: Set ${config.label} to ${config.value}`);
       } catch (err: any) {

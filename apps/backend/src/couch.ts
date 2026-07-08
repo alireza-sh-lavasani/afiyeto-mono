@@ -105,7 +105,7 @@ async function ensureCouchDbCors() {
   console.log('[CouchDB] Verifying and configuring CORS settings on target node...');
   try {
     const corsConfigs = [
-      { path: 'cors/enable_cors', value: 'true', label: 'Enable CORS' },
+      { path: 'chttpd/enable_cors', value: 'true', label: 'Enable CORS' },
       { path: 'cors/origins', value: '*', label: 'Allow Origins (*)' },
       { path: 'cors/credentials', value: 'true', label: 'Allow Credentials' },
       { path: 'cors/methods', value: 'GET, PUT, POST, HEAD, DELETE', label: 'Allowed Methods' },

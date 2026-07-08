@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ESupportedLanguages, languagesDisplayNames } from '../languages/language.enums.ts';
-import { TSyncStatus, forceManualSync } from '../db/pouchdb.ts';
+import { useBackendConnection } from '../hooks/useBackendConnection.ts';
+import { usePouchSyncStatus } from '../hooks/usePouchSyncStatus.ts';
 import { 
   Activity, 
   Users, 
-  Settings, 
   Wifi, 
   WifiOff, 
   Globe, 
@@ -25,59 +25,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [syncStatus, setSyncStatus] = useState<TSyncStatus>(navigator.onLine ? 'synced' : 'offline');
+  const isOnline = useBackendConnection();
+  const { syncStatus, toast, handleSyncClick } = usePouchSyncStatus();
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const target = import.meta.env.VITE_APP_TARGET;
   const isTablet = target === 'tablet';
-
-  useEffect(() => {
-    const goOnline = () => setIsOnline(true);
-    const goOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', goOnline);
-    window.addEventListener('offline', goOffline);
-
-    return () => {
-      window.removeEventListener('online', goOnline);
-      window.removeEventListener('offline', goOffline);
-    };
-  }, []);
-
-  // Listen to PouchDB native synchronization status updates
-  useEffect(() => {
-    const handleSyncStatus = (e: Event) => {
-      const status = (e as CustomEvent).detail as TSyncStatus;
-      setSyncStatus(status);
-    };
-
-    window.addEventListener('afiyet_sync_status', handleSyncStatus);
-    return () => {
-      window.removeEventListener('afiyet_sync_status', handleSyncStatus);
-    };
-  }, []);
-
-  // Listen to toast messages from the sync engine
-  useEffect(() => {
-    let timer: any;
-    const handleToast = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type: 'success' | 'error'; message: string };
-      setToast(detail);
-      
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        setToast(null);
-      }, 4000);
-    };
-
-    window.addEventListener('afiyet_sync_toast', handleToast);
-    return () => {
-      window.removeEventListener('afiyet_sync_toast', handleToast);
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
 
   const handleLanguageChange = (lang: ESupportedLanguages) => {
     i18n.changeLanguage(lang);
@@ -90,15 +43,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     document.documentElement.lang = lang;
     
     setIsLangMenuOpen(false);
-  };
-
-  const handleSyncClick = async () => {
-    if (syncStatus === 'syncing') return;
-    try {
-      await forceManualSync();
-    } catch (err) {
-      // Handled inside forceManualSync
-    }
   };
 
   // Helper to render sync status badge as a button
@@ -197,16 +141,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <span>Analytics & Audit</span>
               </button>
             )}
-
-            <button 
-              onClick={() => alert('Settings are managed in server deployment configurations.')}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 ${
-                isTablet ? 'justify-center' : ''
-              }`}
-            >
-              <Settings className="h-5 w-5" />
-              {!isTablet && <span>Settings</span>}
-            </button>
           </nav>
         </div>
 
@@ -246,9 +180,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center gap-3">
             <span className="font-semibold text-sm sm:text-base text-slate-200">
               {isTablet ? '📱 Clinical Tablet UI' : '💻 Administrative Dashboard'}
-            </span>
-            <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400 border border-slate-700/50">
-              BUILD: {target.toUpperCase()}
             </span>
           </div>
 

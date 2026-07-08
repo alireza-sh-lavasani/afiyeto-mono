@@ -66,6 +66,7 @@ export default defineConfig(({ mode }) => {
       // Inject target version so client app can dynamically toggle routes/features
       'import.meta.env.VITE_APP_TARGET': JSON.stringify(isTablet ? 'tablet' : 'dashboard'),
       'global': 'globalThis',
+      'process.env': '{}'
     },
     server: {
       port: 3000,

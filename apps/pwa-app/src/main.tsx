@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
+
+// Self-healing service worker unregistration in development mode
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const registration of registrations) {
+      registration.unregister();
+      console.warn('[PWA Dev] Unregistered lingering Service Worker to ensure instant HMR updates.');
+    }
+  });
+}
 import {
   Outlet,
   RouterProvider,

@@ -1,15 +1,27 @@
 import { useState, useEffect } from 'react';
-import { TSyncStatus, forceManualSync } from '../db/pouchdb.ts';
+import { TSyncStatus, forceManualSync, startLiveSync, stopLiveSync } from '../db/pouchdb.ts';
 
 /**
- * Custom React Hook to track the native PouchDB-to-CouchDB synchronization status
- * and handle background toast alerts dispatched from the sync engine.
+ * Custom React Hook to track the native PouchDB-to-CouchDB synchronization status,
+ * handle background toast alerts, and dynamically manage the replication loops'
+ * lifecycle based on active backend reachability.
  */
-export const usePouchSyncStatus = () => {
+export const usePouchSyncStatus = (isBackendOnline: boolean) => {
   const [syncStatus, setSyncStatus] = useState<TSyncStatus>('offline');
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // 1. Listen to PouchDB native synchronization status updates
+  // 1. Manage sync lifecycle based on backend reachability (battery protection)
+  useEffect(() => {
+    if (isBackendOnline) {
+      console.log('[PouchDB Sync Hook] Backend online. Starting replication loops.');
+      startLiveSync();
+    } else {
+      console.log('[PouchDB Sync Hook] Backend offline. Cancelling replication loops to conserve battery.');
+      stopLiveSync();
+    }
+  }, [isBackendOnline]);
+
+  // 2. Listen to PouchDB native synchronization status updates
   useEffect(() => {
     const handleSyncStatus = (e: Event) => {
       const status = (e as CustomEvent).detail as TSyncStatus;
@@ -22,7 +34,7 @@ export const usePouchSyncStatus = () => {
     };
   }, []);
 
-  // 2. Listen to toast messages from the sync engine
+  // 3. Listen to toast messages from the sync engine
   useEffect(() => {
     let timer: any;
     const handleToast = (e: Event) => {

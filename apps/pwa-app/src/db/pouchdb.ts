@@ -134,17 +134,19 @@ export async function forceManualSync() {
   }
 }
 
-// Initialize live sync on load
-startLiveSync();
-
-// Handle browser network reconnect events to trigger check
-window.addEventListener('online', () => {
-  console.log('[PouchDB Sync] Browser went online. Re-dispatching sync status.');
+export function stopLiveSync() {
+  console.log('[PouchDB Sync] Cancelling active replication loops due to offline status.');
+  if (patientSync) {
+    patientSync.cancel();
+    patientSync = null;
+  }
+  if (examSync) {
+    examSync.cancel();
+    examSync = null;
+  }
+  patientSyncState = 'offline';
+  examSyncState = 'offline';
   dispatchSyncStatus();
-});
-window.addEventListener('offline', () => {
-  console.log('[PouchDB Sync] Browser went offline. Dispatching offline status.');
-  dispatchSyncStatus();
-});
+}
 
-export default { patientsDb, examinationsDb, forceManualSync };
+export default { patientsDb, examinationsDb, forceManualSync, startLiveSync, stopLiveSync };

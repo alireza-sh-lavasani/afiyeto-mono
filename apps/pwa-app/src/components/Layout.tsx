@@ -26,7 +26,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
 
   const isOnline = useBackendConnection();
-  const { syncStatus, toast, handleSyncClick } = usePouchSyncStatus();
+  const { syncStatus, toast, handleSyncClick } = usePouchSyncStatus(isOnline);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   const target = import.meta.env.VITE_APP_TARGET;

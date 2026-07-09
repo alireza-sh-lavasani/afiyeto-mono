@@ -7,3 +7,5 @@ export * from './types/index.ts';
 export * from './interafces/patient.model.ts';
 export * from './interafces/examination.model.ts';
 export * from './interafces/sync.model.ts';
+export * from './data/icd10-codes.ts';
+export * from './data/presets.ts';

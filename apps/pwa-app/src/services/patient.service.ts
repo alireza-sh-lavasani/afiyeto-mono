@@ -23,8 +23,12 @@ export const usePatientService = () => {
       const result = await patientsDb.allDocs({ include_docs: true });
       const patientsList = result.rows
         .map(row => row.doc)
-        .filter((doc): doc is Patient => !!doc && doc.type === 'patient')
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        .filter((doc): doc is Patient & { _rev: string } => !!doc && doc.type === 'patient')
+        .sort((a, b) => {
+          const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return timeB - timeA;
+        });
       
       setPatients(patientsList);
       return patientsList;
@@ -41,7 +45,7 @@ export const usePatientService = () => {
       const result = await patientsDb.allDocs({ include_docs: true });
       return result.rows
         .map(row => row.doc)
-        .find((doc): doc is Patient => 
+        .find((doc): doc is Patient & { _rev: string } => 
           !!doc && 
           doc.type === 'patient' && 
           (doc.patientId === id || doc.tmpPatientId === id || doc._id === id)

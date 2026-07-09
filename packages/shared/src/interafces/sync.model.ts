@@ -17,6 +17,37 @@ export interface ISyncCreatePatientData {
   uniqueGovID?: string;
   birthDate: Date;
   tmpPatientId: string;
+
+  // --- New demographic fields ---
+  phoneNumber?: string;
+  ethnicity?: string;
+  nationality?: string;
+  occupation?: string;
+  bloodType?: string;
+
+  // --- Permanent Residence ---
+  residenceZoba?: string;
+  residenceSubZoba?: string;
+  residenceVillage?: string;
+
+  // --- Social Determinants ---
+  householdSize?: number;
+  waterSource?: string;
+  sanitationType?: string;
+
+  // --- Medical History ---
+  allergies?: string[];
+  chronicConditions?: string[];
+  currentMedications?: string[];
+
+  // --- Disability ---
+  disabilities?: string[];
+
+  // --- Reproductive ---
+  isPregnant?: boolean;
+  pregnancyDueDate?: string;
+  numberOfPregnancies?: number;
+  numberOfLiveBirths?: number;
 }
 
 export interface ISyncCreatePatientDto extends ISyncBaseDto {
@@ -32,6 +63,37 @@ export interface ISyncUpdatePatientData {
   uniqueGovID?: string;
   examinations?: any;
   birthDate?: Date;
+
+  // --- New demographic fields ---
+  phoneNumber?: string;
+  ethnicity?: string;
+  nationality?: string;
+  occupation?: string;
+  bloodType?: string;
+
+  // --- Permanent Residence ---
+  residenceZoba?: string;
+  residenceSubZoba?: string;
+  residenceVillage?: string;
+
+  // --- Social Determinants ---
+  householdSize?: number;
+  waterSource?: string;
+  sanitationType?: string;
+
+  // --- Medical History ---
+  allergies?: string[];
+  chronicConditions?: string[];
+  currentMedications?: string[];
+
+  // --- Disability ---
+  disabilities?: string[];
+
+  // --- Reproductive ---
+  isPregnant?: boolean;
+  pregnancyDueDate?: string;
+  numberOfPregnancies?: number;
+  numberOfLiveBirths?: number;
 }
 
 export interface ISyncUpdatePatientDto extends ISyncBaseDto {

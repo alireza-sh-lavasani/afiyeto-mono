@@ -20,9 +20,13 @@ const couch = nano({
 
 export const PATIENTS_DB_NAME = 'afiyet_patients';
 export const EXAMINATIONS_DB_NAME = 'afiyet_examinations';
+export const CUSTOM_ENTRIES_DB_NAME = 'afiyet_custom_entries';
+export const ICD10_DB_NAME = 'afiyet_icd10';
 
 export const patientsDb = couch.use(PATIENTS_DB_NAME);
 export const examinationsDb = couch.use(EXAMINATIONS_DB_NAME);
+export const customEntriesDb = couch.use(CUSTOM_ENTRIES_DB_NAME);
+export const icd10Db = couch.use(ICD10_DB_NAME);
 
 // Design Document for Patient ID Sequences View
 const SEQUENCE_DESIGN_DOC_ID = '_design/sequences';
@@ -149,6 +153,8 @@ export async function initCouchDb() {
     // Ensure core databases exist
     await ensureDbExists(PATIENTS_DB_NAME);
     await ensureDbExists(EXAMINATIONS_DB_NAME);
+    await ensureDbExists(CUSTOM_ENTRIES_DB_NAME);
+    await ensureDbExists(ICD10_DB_NAME);
     
     // Ensure sequence views exist
     await ensureDesignDocExists();

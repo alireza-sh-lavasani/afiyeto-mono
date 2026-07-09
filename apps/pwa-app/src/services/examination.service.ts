@@ -4,7 +4,7 @@ import { Examination, EIdType } from '@afiyet/shared';
 import { examinationsDb, patientsDb } from '../db/pouchdb.ts';
 import { usePatientService } from './patient.service.ts';
 
-export const useExaminationService = (patientId: string, idType: EIdType) => {
+export const useExaminationService = (patientId: string, _idType: EIdType) => {
   const [examinations, setExaminations] = useState<Examination[]>([]);
   const [loading, setLoading] = useState(false);
   const { getPatientById } = usePatientService();
@@ -14,7 +14,7 @@ export const useExaminationService = (patientId: string, idType: EIdType) => {
       const result = await examinationsDb.allDocs({ include_docs: true });
       return result.rows
         .map(row => row.doc)
-        .find((doc): doc is Examination => !!doc && doc.type === 'examination' && doc.examinationId === examinationId);
+        .find((doc): doc is Examination & { _rev: string } => !!doc && doc.type === 'examination' && doc.examinationId === examinationId);
     } catch (error) {
       console.error('Error getting examination by ID:', error);
       return undefined;
@@ -30,13 +30,17 @@ export const useExaminationService = (patientId: string, idType: EIdType) => {
       const result = await examinationsDb.allDocs({ include_docs: true });
       const allExams = result.rows
         .map(row => row.doc)
-        .filter((doc): doc is Examination => !!doc && doc.type === 'examination');
+        .filter((doc): doc is Examination & { _rev: string } => !!doc && doc.type === 'examination');
 
       // Filter by the patient's examinations list
       const patientExams = (patient.examinations || [])
-        .map(examId => allExams.find(e => e.examinationId === examId))
-        .filter((e): e is Examination => !!e)
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        .map((examId: string) => allExams.find((e) => e.examinationId === examId))
+        .filter((e): e is any => !!e)
+        .sort((a: any, b: any) => {
+          const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return timeB - timeA;
+        });
 
       setExaminations(patientExams);
       return patientExams;
@@ -124,7 +128,7 @@ export const useExaminationService = (patientId: string, idType: EIdType) => {
       if (patient) {
         const updatedPatient = {
           ...patient,
-          examinations: (patient.examinations || []).filter(examId => examId !== existingExam.examinationId),
+          examinations: (patient.examinations || []).filter((examId: string) => examId !== existingExam.examinationId),
           updatedAt: new Date().toISOString(),
         };
         await patientsDb.put(updatedPatient);

@@ -13,6 +13,7 @@
     "start:backend": "npm run start --workspace=apps/backend",
     "build:tablet": "npm run build:tablet --workspace=apps/pwa-app",
     "build:dashboard": "npm run build:dashboard --workspace=apps/pwa-app",
+    "test:pwa": "npm run test --workspace=apps/pwa-app",
     "install:all": "npm install"
   }
 }

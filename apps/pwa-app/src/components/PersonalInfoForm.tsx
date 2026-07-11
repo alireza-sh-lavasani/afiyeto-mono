@@ -374,7 +374,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Photo Section */}
         <div className="flex flex-col items-center sm:flex-row gap-6 bg-background/40 p-5 rounded-2xl border border-border/80">
           <div className="relative h-28 w-28 rounded-full border border-border/80 overflow-hidden bg-secondary flex items-center justify-center shrink-0">
@@ -1360,7 +1360,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         <div className="pt-4 border-t border-border flex justify-end">
           <button
             type="submit"
-            disabled={isSubmitting || !birthDate}
+            disabled={isSubmitting}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 disabled:opacity-40 disabled:hover:bg-primary transition-all shadow-lg shadow-primary/20"
           >
             {isSubmitting ? (

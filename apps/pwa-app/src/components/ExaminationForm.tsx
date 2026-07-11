@@ -554,6 +554,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
   const weight = watch('weight');
   const height = watch('height');
   const painScale = watch('painScale');
+  const bpSystolic = watch('bloodPressureSystolic');
   const referralNeeded = watch('clinicalAssessment.referralNeeded');
   const repIsPregnant = watch('reproductiveHealth.isPregnant');
 
@@ -739,7 +740,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* 1. Location Section */}
         <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
           <div className="flex items-center gap-2 text-primary">
@@ -965,8 +966,10 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                 name="temperature"
                 rules={{
                   required: t('validation.temperatureRequired'),
-                  min: { value: 30, message: t('validation.temperatureMin') },
-                  max: { value: 45, message: t('validation.temperatureMax') },
+                  validate: {
+                    min: (v) => !v || parseFloat(v as any) >= 30 || t('validation.temperatureMin'),
+                    max: (v) => !v || parseFloat(v as any) <= 45 || t('validation.temperatureMax'),
+                  }
                 }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <input
@@ -975,8 +978,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     min="30"
                     max="45"
                     onBlur={onBlur}
-                    onChange={(e) => onChange(e.target.value)}
-                    value={value}
+                    onChange={onChange}
+                    value={value ?? ''}
                     placeholder="36.5"
                     className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
                       errors.temperature ? 'border-red-500/80 focus:ring-red-500' : 'border-border focus:border-primary'
@@ -1039,8 +1042,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                   min: { value: 30, message: t('validation.bpDiastolicMin') },
                   max: { value: 150, message: t('validation.bpDiastolicMax') },
                   validate: (val) => {
-                    const sys = watch('bloodPressureSystolic');
-                    if (val && sys && parseInt(val, 10) >= parseInt(sys, 10)) {
+                    if (val && bpSystolic && parseInt(val, 10) >= parseInt(bpSystolic, 10)) {
                       return t('validation.bpDiastolicLimit');
                     }
                     return true;
@@ -1183,8 +1185,10 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                 name="bloodSugar"
                 rules={{
                   required: t('validation.bloodSugarRequired'),
-                  min: { value: 20, message: t('validation.bloodSugarMin') },
-                  max: { value: 600, message: t('validation.bloodSugarMax') },
+                  validate: {
+                    min: (v) => !v || parseInt(v as any, 10) >= 20 || t('validation.bloodSugarMin'),
+                    max: (v) => !v || parseInt(v as any, 10) <= 600 || t('validation.bloodSugarMax'),
+                  }
                 }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <input
@@ -1192,8 +1196,8 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                     min="20"
                     max="600"
                     onBlur={onBlur}
-                    onChange={(e) => onChange(e.target.value)}
-                    value={value}
+                    onChange={onChange}
+                    value={value ?? ''}
                     placeholder="95"
                     className={`bg-background border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
                       errors.bloodSugar ? 'border-red-500/80 focus:ring-red-500' : 'border-border focus:border-primary'

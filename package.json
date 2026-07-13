@@ -14,6 +14,9 @@
     "build:tablet": "npm run build:tablet --workspace=apps/pwa-app",
     "build:dashboard": "npm run build:dashboard --workspace=apps/pwa-app",
     "test:pwa": "npm run test --workspace=apps/pwa-app",
-    "install:all": "npm install"
+    "install:all": "npm install",
+    "download-models": "npm run download-models --workspace=packages/rag-builder",
+    "build-index": "npm run build-index --workspace=packages/rag-builder",
+    "test-local": "npm run test-local --workspace=packages/rag-builder"
   }
 }

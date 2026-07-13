@@ -116,6 +116,3 @@ public/
 .DS_Store
 Thumbs.db
 
-# AI Context Info
-ai-context.json
-

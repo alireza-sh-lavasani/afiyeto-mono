@@ -1,0 +1,61 @@
+{
+  "project": "afiyet",
+  "historical_layout": {
+    "root": "C:/projects/afiyet/",
+    "repos": {
+      "android-app": "React Native Expo, Realm DB local, custom pako-compressed /sync/buffer NestJS sync logic",
+      "web-app": "Next.js admin portal dashboard",
+      "app-backend": "NestJS backend with MongoDB database (Migrated to apps/backend in mono repo)",
+      "common": "Separate built library (@alireza-lavasani/afiyet-common)",
+      "infra": "Docker Compose containing MongoDB, Kong API Gateway, SSL certificates"
+    }
+  },
+  "modernization_architecture": {
+    "target_workspace": "C:/projects/afiyet-mono/ (NPM Monorepo)",
+    "packages": {
+      "packages/shared": "Exports raw Typescript validation schemas & interfaces directly (removes build steps)",
+      "apps/pwa-app": "Single Vite SPA supporting tablet PWA (VITE_APP_TARGET=tablet) and web dashboard (VITE_APP_TARGET=dashboard)",
+      "apps/backend": "Lightweight Fastify server with tsx runtime, direct CouchDB changes feed integration for sequential patient ID generation, Zod validation using shared schemas, and automatic CouchDB CORS setup on boot"
+    },
+    "database_transition": {
+      "client": "Realm DB -> PouchDB (browser IndexedDB storage) using single VITE_COUCHDB_BASE_URL variable for simple LAN IP target configuration. Includes dynamic seeding of the offline local afiyet_icd10 database (500+ diagnostic entries) and afiyet_custom_entries database to track user-added options (ethnicities, occupations).",
+      "server": "MongoDB -> CouchDB. Backend configures afiyet_patients, afiyet_examinations, afiyet_icd10, and afiyet_custom_entries on startup.",
+      "replication": "Removed manual pako transaction queue sync. Replaced with native PouchDB-to-CouchDB sync (PouchDB.sync live, retry). Support for diagnostic manual resync with overlay toast notifications",
+      "automatic_server_provisioning": "Fastify backend automatically configures CouchDB CORS endpoints (chttpd/cors) on startup using raw boolean and unquoted wildcard values to align with Erlang parser expectations. Docker-compose mounts couchdb.ini at boot to enable chttpd CORS on port 5984 by default."
+    },
+    "pwa_offline_constraints": {
+      "network": "Supports 100% offline environments (rural Eritrea)",
+      "caching": "vite-plugin-pwa generateSW, autoUpdate, inline registration for instant offline startup",
+      "camera": "Browser getUserMedia API for taking patient photos (Base64 avatar storage)",
+      "locales": {
+        "languages": ["en", "ar", "ti"],
+        "rtl": ["ar"],
+        "layout": "i18n.ts applies document.documentElement.dir = 'rtl' dynamically"
+      }
+    },
+    "client_build_polyfilled_caps": {
+      "global": "Mapped to 'globalThis' in vite.config.ts define block",
+      "events": "Installed Node events library and aliased to 'events' to fix pouchdb EventEmitter runtime crashes"
+    },
+    "test_suites": {
+      "pwa_tests": "Run via 'npm run test:pwa'. Covers offline PouchDB integration tests (initials/birthdate hash-based patient ID generation, schema compliance verification, and successful writes) and form validation tests with RTL/Vitest (obstetric parity-gravida validation, critical vitals range checks, coordinates regex matching)."
+    }
+  },
+  "offline_llm_rag_architecture": {
+    "client": "Vite PWA (apps/pwa-app) compiled via Capacitor/Cordova into an Android APK, running offline inside a WebView.",
+    "sidecar": "PocketPal AI sideloaded on the tablet running local HTTP API on localhost:5001 using llama.cpp background native services.",
+    "models": {
+      "embedding": "nomic-embed-text.Q4_K_M.gguf (~150MB-200MB RAM) hosted on PocketPal localhost API.",
+      "llm": "llama-3.2-3b-instruct.Q4_K_M.gguf (~2.0GB RAM) hosted on PocketPal localhost API."
+    },
+    "rag_database": {
+      "search_engine": "Orama Vector DB restored in-memory client-side inside the WebView from a pre-compiled binary file ('knowledge-base.msp' stored in apps/pwa-app/public/assets/).",
+      "sources": ["WHO Guidelines", "MedlinePlus (NIH)", "MSD Manuals"],
+      "pre_embedding_pipeline": "Node.js builder script inside the monorepo ('packages/rag-builder') that compiles, chunks, and embeds the medical sources at build time using unquantized FP32 'all-MiniLM-L6-v2' (or similar model) on a developer machine, outputting the serialized binary database."
+    },
+    "query_ingestion_strategy": {
+      "method": "Sidecar Vectoring (Option 1). PWA compiles patient visit form states and notes into a standardized clinical text string ('Synthetic Query'), calls PocketPal local /v1/embeddings API to get the 384-dimensional vector, and queries the restored Orama database locally.",
+      "inference": "Matched context passages + synthetic query are compiled into a prompt and sent to PocketPal local /v1/chat/completions API using Llama 3.2 3B. The response is streamed to the UI."
+    }
+  }
+}

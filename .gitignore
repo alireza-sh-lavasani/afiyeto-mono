@@ -119,3 +119,5 @@ Thumbs.db
 # AI Context Info
 ai-context.json
 
+packages/rag-builder/models
+packages/rag-builder/raw-knowledge-base

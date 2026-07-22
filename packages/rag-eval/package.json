@@ -1,0 +1,22 @@
+{
+  "name": "@afiyet/rag-eval",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsx src/eval-retrieval.ts && tsx src/eval-generation.ts",
+    "test:retrieval": "tsx src/eval-retrieval.ts",
+    "test:generation": "tsx src/eval-generation.ts"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7",
+    "sqlite-vec": "^0.1.6",
+    "@xenova/transformers": "^2.17.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.2.2"
+  }
+}

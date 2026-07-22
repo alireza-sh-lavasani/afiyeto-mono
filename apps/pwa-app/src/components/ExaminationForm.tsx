@@ -20,7 +20,9 @@ import {
   X,
   Trash2,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react';
+import { ClinicalAiGuideModal } from './ClinicalAiGuideModal';
 
 interface ExaminationFormProps {
   mode: 'create' | 'edit';
@@ -321,6 +323,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
   const [selectedZoba, setSelectedZoba] = useState<EZoba | ''>(
     examinationFormData?.zoba || ''
   );
+  const [isAiGuideOpen, setIsAiGuideOpen] = useState(false);
 
   // Camera states for clinical photo capture
   const [showCamera, setShowCamera] = useState(false);
@@ -1972,9 +1975,19 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
 
         {/* 6. Clinical Assessment Section */}
         <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
-          <div className="flex items-center gap-2 text-blue-400">
-            <Stethoscope className="h-5 w-5" />
-            <h3 className="font-bold text-foreground">Clinical Assessment & Diagnosis</h3>
+          <div className="flex items-center justify-between gap-2 text-blue-400">
+            <div className="flex items-center gap-2">
+              <Stethoscope className="h-5 w-5" />
+              <h3 className="font-bold text-foreground">Clinical Assessment & Diagnosis</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAiGuideOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-500/10 text-teal-300 border border-teal-500/30 hover:bg-teal-500/20 text-xs font-semibold transition-colors shadow-sm"
+            >
+              <Sparkles className="w-4 h-4 text-teal-400" />
+              Get AI Guidance
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
@@ -2526,6 +2539,22 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
           </button>
         </div>
       </form>
+
+      <ClinicalAiGuideModal
+        isOpen={isAiGuideOpen}
+        onClose={() => setIsAiGuideOpen(false)}
+        examData={{
+          patientId,
+          vitals: {
+            temperature: watch('vitals.temperature'),
+            bloodPressure: `${watch('vitals.systolicBP') || ''}/${watch('vitals.diastolicBP') || ''}`,
+            heartRate: watch('vitals.heartRate'),
+            respiratoryRate: watch('vitals.respiratoryRate')
+          },
+          chiefComplaint: watch('clinicalAssessment.chiefComplaint'),
+          notes: watch('clinicalAssessment.clinicalNotes')
+        }}
+      />
     </div>
   );
 };

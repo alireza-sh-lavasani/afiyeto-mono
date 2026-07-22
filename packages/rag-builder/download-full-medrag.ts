@@ -50,20 +50,30 @@ function downloadFile(url: string, destPath: string): Promise<void> {
 }
 
 async function main() {
-  console.log("=== MedRAG Full Corpus Downloader ===");
+  console.log("=== MedRAG Full 4-Corpus Downloader ===");
   ensureDir(MEDRAG_DIR);
 
-  // HuggingFace direct raw dataset URLs for MedRAG corpora
+  // Complete MedRAG Corpora (MedCorp): StatPearls, Textbooks, PubMed, Wikipedia
   const sources = [
     {
-      name: "StatPearls (Full ~9,200 Clinical Decision Articles)",
+      name: "1. StatPearls (Full ~9,200 Clinical Decision Articles)",
       url: "https://huggingface.co/datasets/MedRAG/statpearls/raw/main/statpearls.jsonl",
       dest: path.join(MEDRAG_DIR, "statpearls.jsonl")
     },
     {
-      name: "Medical Textbooks (18 Gold-Standard USMLE & Clinical Textbooks)",
+      name: "2. Medical Textbooks (18 Gold-Standard USMLE & Clinical Textbooks)",
       url: "https://huggingface.co/datasets/MedRAG/textbooks/raw/main/textbooks.jsonl",
       dest: path.join(MEDRAG_DIR, "textbooks.jsonl")
+    },
+    {
+      name: "3. Wikipedia Medical Articles (Curated WikiProject Medicine)",
+      url: "https://huggingface.co/datasets/MedRAG/wikipedia/raw/main/wikipedia.jsonl",
+      dest: path.join(MEDRAG_DIR, "wikipedia.jsonl")
+    },
+    {
+      name: "4. PubMed Biomedical Abstracts (BioASQ / PMC Articles)",
+      url: "https://huggingface.co/datasets/MedRAG/pubmed/raw/main/pubmed.jsonl",
+      dest: path.join(MEDRAG_DIR, "pubmed.jsonl")
     }
   ];
 
@@ -74,11 +84,11 @@ async function main() {
       const stats = fs.statSync(s.dest);
       console.log(`[SUCCESS] Downloaded ${s.name}! Size: ${(stats.size / (1024 * 1024)).toFixed(2)} MB`);
     } catch (err: any) {
-      console.warn(`[NOTICE] Direct HuggingFace raw download attempted: ${err.message}`);
+      console.warn(`[NOTICE] Download attempted for ${s.name}: ${err.message}`);
     }
   }
 
-  console.log("\n=== Full Corpus Downloader Ready ===");
+  console.log("\n=== Full MedRAG 4-Corpus Downloader Process Complete ===");
 }
 
 main();

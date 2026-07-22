@@ -35,7 +35,6 @@ function ensureDir(dirPath: string) {
   }
 }
 
-// Simple text chunker splitting by headers or 400-word blocks
 function chunkContent(title: string, section: string, rawText: string, source: string): ChunkItem[] {
   const chunks: ChunkItem[] = [];
   const paragraphs = rawText.split(/\n{2,}/);
@@ -82,7 +81,6 @@ function chunkContent(title: string, section: string, rawText: string, source: s
   return chunks;
 }
 
-// Parse markdown files in directory
 function parseMarkdownDir(dirPath: string, source: string): ChunkItem[] {
   if (!fs.existsSync(dirPath)) return [];
   const chunks: ChunkItem[] = [];
@@ -109,7 +107,6 @@ function parseMarkdownDir(dirPath: string, source: string): ChunkItem[] {
   return chunks;
 }
 
-// Parse JSON files in directory (MedlinePlus)
 function parseJsonDir(dirPath: string, source: string): ChunkItem[] {
   if (!fs.existsSync(dirPath)) return [];
   const chunks: ChunkItem[] = [];
@@ -130,7 +127,6 @@ function parseJsonDir(dirPath: string, source: string): ChunkItem[] {
   return chunks;
 }
 
-// Parse JSONL files (MedRAG StatPearls / Textbooks)
 async function parseJsonlFile(filePath: string, source: string): Promise<ChunkItem[]> {
   if (!fs.existsSync(filePath)) return [];
   const chunks: ChunkItem[] = [];
@@ -138,7 +134,6 @@ async function parseJsonlFile(filePath: string, source: string): Promise<ChunkIt
   const fileStream = fs.createReadStream(filePath);
   const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
 
-  let lineCount = 0;
   for await (const line of rl) {
     if (!line.trim()) continue;
     try {
@@ -153,40 +148,40 @@ async function parseJsonlFile(filePath: string, source: string): Promise<ChunkIt
     } catch (e) {
       // skip invalid jsonl line
     }
-    lineCount++;
   }
 
   return chunks;
 }
 
 async function main() {
-  console.log("=== Afiyet MedRAG Knowledge Base Compiler (sqlite-vec + FTS5) ===");
+  console.log("=== Afiyet MedRAG 4-Corpus Knowledge Base Compiler (sqlite-vec + FTS5) ===");
 
   ensureDir(PWA_ASSETS_DIR);
   if (fs.existsSync(DB_OUTPUT_PATH)) {
     fs.unlinkSync(DB_OUTPUT_PATH);
   }
 
-  // Load raw knowledge base chunks
   const allChunks: ChunkItem[] = [];
   allChunks.push(...parseMarkdownDir(path.join(KNOWLEDGE_BASE_DIR, "who"), "who_guidelines"));
   allChunks.push(...parseMarkdownDir(path.join(KNOWLEDGE_BASE_DIR, "msd"), "statpearls_msd"));
   allChunks.push(...parseJsonDir(path.join(KNOWLEDGE_BASE_DIR, "medlineplus"), "medlineplus"));
 
-  // Check for full MedRAG datasets
+  // Check for full MedRAG datasets (MedCorp: StatPearls, Textbooks, Wikipedia, PubMed)
   const medragFullDir = path.join(KNOWLEDGE_BASE_DIR, "medrag_full");
   if (fs.existsSync(medragFullDir)) {
-    const statpearlsFile = path.join(medragFullDir, "statpearls.jsonl");
-    const textbooksFile = path.join(medragFullDir, "textbooks.jsonl");
+    const corpora = [
+      { file: "statpearls.jsonl", source: "statpearls_full", label: "StatPearls (~9,200 Clinical Articles)" },
+      { file: "textbooks.jsonl", source: "textbooks_full", label: "Medical Textbooks (18 USMLE Textbooks)" },
+      { file: "wikipedia.jsonl", source: "wikipedia_full", label: "Wikipedia Medical Articles" },
+      { file: "pubmed.jsonl", source: "pubmed_full", label: "PubMed Biomedical Abstracts" }
+    ];
 
-    if (fs.existsSync(statpearlsFile)) {
-      console.log("Parsing full MedRAG StatPearls dataset...");
-      allChunks.push(...(await parseJsonlFile(statpearlsFile, "statpearls_full")));
-    }
-
-    if (fs.existsSync(textbooksFile)) {
-      console.log("Parsing full MedRAG Medical Textbooks dataset...");
-      allChunks.push(...(await parseJsonlFile(textbooksFile, "textbooks_full")));
+    for (const c of corpora) {
+      const targetPath = path.join(medragFullDir, c.file);
+      if (fs.existsSync(targetPath)) {
+        console.log(`Parsing MedRAG corpus: ${c.label}...`);
+        allChunks.push(...(await parseJsonlFile(targetPath, c.source)));
+      }
     }
   }
 
@@ -203,7 +198,6 @@ async function main() {
 
   await new Promise<void>((resolve, reject) => {
     db.serialize(() => {
-      // Table 1: Base metadata & text
       db.run(`
         CREATE TABLE med_chunks (
           id TEXT PRIMARY KEY,
@@ -214,7 +208,6 @@ async function main() {
         );
       `);
 
-      // Table 2: Full-text search (BM25)
       db.run(`
         CREATE VIRTUAL TABLE med_fts USING fts5(
           title,
@@ -225,7 +218,6 @@ async function main() {
         );
       `);
 
-      // Table 3: On-disk Vector embeddings (sqlite-vec)
       db.run(`
         CREATE VIRTUAL TABLE vec_chunks USING vec0(
           chunk_id TEXT PRIMARY KEY,
@@ -251,7 +243,6 @@ async function main() {
       process.stdout.write(`Embedding & Indexing passage [${i + 1}/${allChunks.length}]: ${item.title}\r`);
     }
 
-    // Clean text and extract embedding
     const cleanText = `${item.title} - ${item.section}: ${item.content}`.replace(/\s+/g, " ").trim();
     const result = await embedder(cleanText, { pooling: "mean", normalize: true });
     const embeddingFloat32 = new Float32Array(result.data);

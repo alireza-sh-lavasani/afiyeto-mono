@@ -38,7 +38,7 @@ async function main() {
   const cases: GoldenCase[] = JSON.parse(fs.readFileSync(GOLDEN_SUITE_PATH, "utf-8"));
   console.log(`Loaded ${cases.length} golden clinical test cases.`);
 
-  const embedder = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+  const embedder = await pipeline("feature-extraction", "ncbi/MedCPT-Query-Encoder");
 
   const db = new sqlite3.Database(DB_PATH);
   sqliteVec.load(db);

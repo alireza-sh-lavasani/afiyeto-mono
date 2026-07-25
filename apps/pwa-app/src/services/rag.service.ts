@@ -81,8 +81,8 @@ export class OfflineRAGService {
       env.allowRemoteModels = true;
       
       try {
-        this.webEmbedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-        console.log('[RAG Service] Web Transformers.js embedder loaded successfully.');
+        this.webEmbedder = await pipeline('feature-extraction', 'ncbi/MedCPT-Query-Encoder');
+        console.log('[RAG Service] NIH MedCPT Query Encoder loaded successfully.');
       } catch (embErr) {
         console.warn('[RAG Service] Web embedder load skipped, running fast keyword fallback mode.');
       }

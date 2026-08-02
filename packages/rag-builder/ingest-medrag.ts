@@ -32,7 +32,7 @@ interface ChunkItem {
   source: string;
 }
 
-let globalChunkSequence = 1;
+let globalChunkSequence = Date.now();
 
 function ensureDir(dirPath: string) {
   if (!fs.existsSync(dirPath)) {
@@ -170,36 +170,45 @@ function formatTime(seconds: number): string {
 }
 
 async function main() {
+  const isForceClean = process.argv.includes("--clean") || process.argv.includes("--force");
+  const dbExists = fs.existsSync(DB_OUTPUT_PATH);
+  const isAppendMode = dbExists && !isForceClean;
+
   console.log("===============================================================================");
   console.log("  AFIYET HIGH-PERFORMANCE MEDICAL RAG EMBEDDING BUILDER (GPU ACCELERATED)");
   console.log("===============================================================================");
   console.log(`  System Target: Razer Blade Advanced (Intel i7 + 32GB RAM + RTX 2070 Max-Q)`);
   console.log(`  Embedding Model: NIH MedCPT Article Encoder (ncbi/MedCPT-Article-Encoder)`);
   console.log(`  Vector Spec: 768-dimensional Float32 (sqlite-vec + FTS5 BM25)`);
+  console.log(`  Execution Mode: ${isAppendMode ? "INCREMENTAL APPEND MODE (Preserving existing embeddings)" : "CLEAN BUILD MODE"}`);
   console.log(`  GPU Execution Providers: ${JSON.stringify(env.backends?.onnx?.executionProviders || ['cpu'])}`);
   console.log(`  GPU Batch Size: 64 chunks per CUDA/DirectML call`);
   console.log("===============================================================================\n");
 
   ensureDir(PWA_ASSETS_DIR);
-  if (fs.existsSync(DB_OUTPUT_PATH)) {
-    console.log(`[Clean Setup] Replacing existing database at: ${DB_OUTPUT_PATH}`);
+
+  if (isForceClean && dbExists) {
+    console.log(`[Clean Setup] Recreating database from scratch at: ${DB_OUTPUT_PATH}`);
     fs.unlinkSync(DB_OUTPUT_PATH);
   }
 
-  // Pre-load all sources to calculate total chunk count for accurate ETA
+  // Pre-load all sources
   console.log("Scanning input medical datasets...");
-  const sourcesQueue: Array<{ name: string; getChunks: () => Promise<ChunkItem[]> }> = [];
+  const rawSourcesQueue: Array<{ name: string; sourceKey: string; getChunks: () => Promise<ChunkItem[]> }> = [];
 
-  sourcesQueue.push({
+  rawSourcesQueue.push({
     name: "WHO Primary Care Guidelines",
+    sourceKey: "who_guidelines",
     getChunks: async () => parseMarkdownDir(path.join(KNOWLEDGE_BASE_DIR, "who"), "who_guidelines")
   });
-  sourcesQueue.push({
+  rawSourcesQueue.push({
     name: "StatPearls MSD Guidelines",
+    sourceKey: "statpearls_msd",
     getChunks: async () => parseMarkdownDir(path.join(KNOWLEDGE_BASE_DIR, "msd"), "statpearls_msd")
   });
-  sourcesQueue.push({
+  rawSourcesQueue.push({
     name: "MedlinePlus Primary Health Topics",
+    sourceKey: "medlineplus",
     getChunks: async () => parseJsonDir(path.join(KNOWLEDGE_BASE_DIR, "medlineplus"), "medlineplus")
   });
 
@@ -211,15 +220,101 @@ async function main() {
       for (const fileName of files) {
         const filePath = path.join(textbooksDir, fileName);
         const fileBase = path.basename(fileName, ".jsonl");
-        sourcesQueue.push({
+        const sourceKey = `medrag_textbook_${fileBase}`;
+        rawSourcesQueue.push({
           name: `Medical Textbook: ${fileBase}`,
-          getChunks: async () => parseJsonlFile(filePath, `medrag_textbook_${fileBase}`)
+          sourceKey,
+          getChunks: async () => parseJsonlFile(filePath, sourceKey)
         });
       }
     }
   }
 
-  console.log(`Discovered ${sourcesQueue.length} medical source collections to process.\n`);
+  // Initialize SQLite database
+  console.log(`Initializing SQLite Database Engine (${DB_OUTPUT_PATH})...`);
+  const db = new sqlite3.Database(DB_OUTPUT_PATH);
+  sqliteVec.load(db);
+
+  let existingSources = new Set<string>();
+  let rowidCounter = 1;
+
+  if (isAppendMode) {
+    await new Promise<void>((resolve) => {
+      db.all("SELECT DISTINCT source FROM med_chunks", (err, rows: any[]) => {
+        if (!err && rows) {
+          rows.forEach(r => existingSources.add(r.source));
+        }
+        db.get("SELECT MAX(rowid) as maxRowid FROM med_fts", (err2, row: any) => {
+          if (!err2 && row && row.maxRowid) {
+            rowidCounter = row.maxRowid + 1;
+          }
+          resolve();
+        });
+      });
+    });
+
+    console.log(`[Append Mode] Found ${existingSources.size} existing embedded dataset sources in DB.`);
+  } else {
+    let embeddingDim = 768;
+    await new Promise<void>((resolve, reject) => {
+      db.serialize(() => {
+        db.run(`
+          CREATE TABLE IF NOT EXISTS med_chunks (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            section TEXT,
+            content TEXT NOT NULL,
+            source TEXT NOT NULL
+          );
+        `);
+
+        db.run(`
+          CREATE VIRTUAL TABLE IF NOT EXISTS med_fts USING fts5(
+            title,
+            section,
+            content,
+            content='med_chunks',
+            content_rowid='rowid'
+          );
+        `);
+
+        db.run(`
+          CREATE VIRTUAL TABLE IF NOT EXISTS vec_chunks USING vec0(
+            chunk_id TEXT PRIMARY KEY,
+            embedding float[${embeddingDim}]
+          );
+        `, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
+    console.log("Database schema initialized cleanly.\n");
+  }
+
+  // Filter queue for append mode
+  const sourcesQueue = rawSourcesQueue.filter(s => !existingSources.has(s.sourceKey));
+
+  if (sourcesQueue.length === 0) {
+    console.log("\n===============================================================================");
+    console.log("  [COMPLETE] ALL DATASETS ARE ALREADY EMBEDDED IN THE DATABASE!");
+    console.log("===============================================================================");
+    db.all("SELECT source, COUNT(*) as count FROM med_chunks GROUP BY source", (err, rows) => {
+      if (!err && rows) {
+        console.log("Database Contents Summary:");
+        let totalCount = 0;
+        rows.forEach((r: any) => {
+          console.log(`  • ${r.source}: ${r.count} chunks`);
+          totalCount += r.count;
+        });
+        console.log(`Total Embedded Chunks in DB: ${totalCount}`);
+      }
+      db.close();
+    });
+    return;
+  }
+
+  console.log(`Discovered ${sourcesQueue.length} NEW medical source collections to embed.\n`);
 
   // Initialize NIH MedCPT Article Encoder model
   console.log("Loading NIH MedCPT Article Encoder model...");
@@ -235,52 +330,10 @@ async function main() {
     embeddingDim = 384;
   }
 
-  // Initialize SQLite database
-  console.log(`Initializing SQLite Database Engine (${DB_OUTPUT_PATH})...`);
-  const db = new sqlite3.Database(DB_OUTPUT_PATH);
-  sqliteVec.load(db);
-
-  await new Promise<void>((resolve, reject) => {
-    db.serialize(() => {
-      db.run(`
-        CREATE TABLE med_chunks (
-          id TEXT PRIMARY KEY,
-          title TEXT NOT NULL,
-          section TEXT,
-          content TEXT NOT NULL,
-          source TEXT NOT NULL
-        );
-      `);
-
-      db.run(`
-        CREATE VIRTUAL TABLE med_fts USING fts5(
-          title,
-          section,
-          content,
-          content='med_chunks',
-          content_rowid='rowid'
-        );
-      `);
-
-      db.run(`
-        CREATE VIRTUAL TABLE vec_chunks USING vec0(
-          chunk_id TEXT PRIMARY KEY,
-          embedding float[${embeddingDim}]
-        );
-      `, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-  });
-
-  console.log("Database schema initialized cleanly.\n");
-
   const insertChunkStmt = db.prepare(`INSERT INTO med_chunks (id, title, section, content, source) VALUES (?, ?, ?, ?, ?)`);
   const insertFtsStmt = db.prepare(`INSERT INTO med_fts (rowid, title, section, content) VALUES (?, ?, ?, ?)`);
   const insertVecStmt = db.prepare(`INSERT INTO vec_chunks (chunk_id, embedding) VALUES (?, ?)`);
 
-  let rowidCounter = 1;
   let totalChunksProcessed = 0;
   const startTime = Date.now();
 
@@ -333,13 +386,10 @@ async function main() {
         });
       });
 
-      // Calculate speed and ETA
       const elapsedSec = (Date.now() - startTime) / 1000;
       const speed = totalChunksProcessed / elapsedSec;
-      const remainingSourcesCount = totalSources - sourceNum;
-
       const progressPercent = ((fileChunksDone / chunks.length) * 100).toFixed(1);
-      process.stdout.write(`  └─ [File Progress: ${fileChunksDone}/${chunks.length} (${progressPercent}%)] | [Overall Total: ${totalChunksProcessed} chunks] | Speed: ${speed.toFixed(1)} chunks/sec\r`);
+      process.stdout.write(`  └─ [File Progress: ${fileChunksDone}/${chunks.length} (${progressPercent}%)] | [New Total: ${totalChunksProcessed} chunks] | Speed: ${speed.toFixed(1)} chunks/sec\r`);
     }
 
     console.log(`\n  └─ [COMPLETED] ${sourceObj.name} (${chunks.length} chunks embedded).\n`);
@@ -359,9 +409,9 @@ async function main() {
   const sizeMb = (stats.size / (1024 * 1024)).toFixed(2);
 
   console.log("\n===============================================================================");
-  console.log("  BUILD SUCCESSFUL! DATABASE COMPILED AND READY");
+  console.log("  BUILD SUCCESSFUL! DATABASE UPDATED AND READY");
   console.log("===============================================================================");
-  console.log(`  Total Chunks Embedded: ${totalChunksProcessed}`);
+  console.log(`  New Chunks Embedded:   ${totalChunksProcessed}`);
   console.log(`  Total Execution Time:  ${formatTime(totalTimeSec)} (${(totalChunksProcessed / totalTimeSec).toFixed(1)} chunks/sec)`);
   console.log(`  Database File Size:    ${sizeMb} MB`);
   console.log(`  Output Path:           ${DB_OUTPUT_PATH}`);

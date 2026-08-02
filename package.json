@@ -14,6 +14,13 @@
     "build:tablet": "npm run build:tablet --workspace=apps/pwa-app",
     "build:dashboard": "npm run build:dashboard --workspace=apps/pwa-app",
     "test:pwa": "npm run test --workspace=apps/pwa-app",
-    "install:all": "npm install"
+    "test:rag": "npm run test --workspace=packages/rag-eval",
+    "install:all": "npm install",
+    "download-models": "npm run download-models --workspace=packages/rag-builder",
+    "download-kb": "npm run download-kb --workspace=packages/rag-builder",
+    "download-medrag-full": "npm run download-medrag-full --workspace=packages/rag-builder",
+    "build-db": "npm run build-db --workspace=packages/rag-builder",
+    "android:sync": "npm run build:tablet && npm run cap:sync --workspace=apps/android-app",
+    "android:open": "npm run cap:open --workspace=apps/android-app"
   }
 }

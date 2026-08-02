@@ -1,0 +1,77 @@
+[
+  {
+    "id": "case_malaria_001",
+    "title": "Severe Plasmodium Falciparum Malaria",
+    "patient": {
+      "age": 24,
+      "sex": "F",
+      "vitals": { "temp": 39.6, "bp": "100/60", "hr": 112 },
+      "symptoms": ["high fever", "chills", "jaundice", "vomiting", "confusion"],
+      "geography": "rural lowland endemic malaria region"
+    },
+    "expected_keywords": ["malaria", "falciparum", "fever", "jaundice"],
+    "expected_diagnoses": ["Severe Falciparum Malaria", "Malaria"],
+    "expected_disposition": "REFERRAL_RECOMMENDED",
+    "emergency": true
+  },
+  {
+    "id": "case_cholera_002",
+    "title": "Acute Severe Dehydrating Diarrhea (Cholera)",
+    "patient": {
+      "age": 35,
+      "sex": "M",
+      "vitals": { "temp": 37.1, "bp": "85/50", "hr": 125 },
+      "symptoms": ["profuse watery diarrhea", "rice water stools", "severe dehydration", "sunken eyes", "lethargy"],
+      "geography": "active cholera outbreak zone"
+    },
+    "expected_keywords": ["cholera", "diarrhea", "dehydration", "ors"],
+    "expected_diagnoses": ["Cholera", "Acute Severe Dehydrating Diarrhea"],
+    "expected_disposition": "REFERRAL_RECOMMENDED",
+    "emergency": true
+  },
+  {
+    "id": "case_pneumonia_003",
+    "title": "Pediatric Severe Pneumonia",
+    "patient": {
+      "age": 3,
+      "sex": "M",
+      "vitals": { "temp": 38.8, "bp": "95/60", "hr": 135, "rr": 52 },
+      "symptoms": ["fast breathing", "chest indrawing", "cough", "fever", "inability to feed"],
+      "geography": "rural village"
+    },
+    "expected_keywords": ["pneumonia", "breathing", "cough", "fever"],
+    "expected_diagnoses": ["Severe Pneumonia", "Pneumonia"],
+    "expected_disposition": "REFERRAL_RECOMMENDED",
+    "emergency": true
+  },
+  {
+    "id": "case_tb_004",
+    "title": "Pulmonary Tuberculosis",
+    "patient": {
+      "age": 42,
+      "sex": "M",
+      "vitals": { "temp": 37.8, "bp": "115/75", "hr": 88 },
+      "symptoms": ["chronic cough > 3 weeks", "blood-containing mucus", "night sweats", "weight loss", "fatigue"],
+      "geography": "high TB endemic area"
+    },
+    "expected_keywords": ["tuberculosis", "cough", "fever"],
+    "expected_diagnoses": ["Pulmonary Tuberculosis", "Tuberculosis"],
+    "expected_disposition": "REFERRAL_RECOMMENDED",
+    "emergency": false
+  },
+  {
+    "id": "case_scabies_005",
+    "title": "Uncomplicated Scabies Infestation",
+    "patient": {
+      "age": 12,
+      "sex": "F",
+      "vitals": { "temp": 36.8, "bp": "105/68", "hr": 76 },
+      "symptoms": ["intense nocturnal itching", "papular rash in finger webs and wrists", "no systemic signs"],
+      "geography": "rural community school"
+    },
+    "expected_keywords": ["scabies", "itching", "permethrin"],
+    "expected_diagnoses": ["Scabies"],
+    "expected_disposition": "LOCAL_TREATMENT",
+    "emergency": false
+  }
+]

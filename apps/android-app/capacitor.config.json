@@ -1,0 +1,8 @@
+{
+  "appId": "org.afiyet.mobile",
+  "appName": "Afiyet",
+  "webDir": "../pwa-app/dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

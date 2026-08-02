@@ -14,7 +14,10 @@ import {
   Baby,
   Camera,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
+import { useState } from 'react';
+import { ClinicalAiGuideModal } from './ClinicalAiGuideModal';
 
 interface VisitSummaryProps {
   examination: Examination;
@@ -22,6 +25,7 @@ interface VisitSummaryProps {
 
 export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
   const { t } = useTranslation();
+  const [isAiGuideOpen, setIsAiGuideOpen] = useState(false);
 
   const symptomGroups = [
     {
@@ -514,9 +518,19 @@ export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
       {/* 6. Clinical Assessment Section */}
       {examination.clinicalAssessment && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-blue-400 border-b border-border pb-3">
-            <Stethoscope className="h-5 w-5" />
-            <h3 className="font-bold text-lg text-foreground">Clinical Assessment & Diagnosis</h3>
+          <div className="flex items-center justify-between gap-2 text-blue-400 border-b border-border pb-3">
+            <div className="flex items-center gap-2">
+              <Stethoscope className="h-5 w-5" />
+              <h3 className="font-bold text-lg text-foreground">Clinical Assessment & Diagnosis</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAiGuideOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-teal-500/10 text-teal-300 border border-teal-500/30 hover:bg-teal-500/20 text-xs font-semibold transition-colors shadow-sm"
+            >
+              <Sparkles className="w-4 h-4 text-teal-400" />
+              Get AI Guidance
+            </button>
           </div>
           <div className="space-y-4 text-sm">
             {examination.clinicalAssessment.chiefComplaint && (
@@ -752,6 +766,23 @@ export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
           </div>
         </div>
       )}
+
+      <ClinicalAiGuideModal
+        isOpen={isAiGuideOpen}
+        onClose={() => setIsAiGuideOpen(false)}
+        examData={{
+          patientId: examination.patientId || '',
+          vitals: {
+            temperature: examination.vitals?.temperature ? String(examination.vitals.temperature) : undefined,
+            bloodPressure: `${examination.vitals?.systolicBP || ''}/${examination.vitals?.diastolicBP || ''}`,
+            heartRate: examination.vitals?.heartRate ? String(examination.vitals.heartRate) : undefined,
+            respiratoryRate: examination.vitals?.respiratoryRate ? String(examination.vitals.respiratoryRate) : undefined
+          },
+          chiefComplaint: examination.clinicalAssessment?.chiefComplaint,
+          icd10Codes: examination.clinicalAssessment?.icdCodes,
+          notes: examination.clinicalAssessment?.clinicalNotes
+        }}
+      />
     </div>
   );
 };

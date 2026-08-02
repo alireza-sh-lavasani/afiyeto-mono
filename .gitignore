@@ -116,8 +116,8 @@ public/
 .DS_Store
 Thumbs.db
 
-# AI Context Info
-ai-context.json
+packages/rag-builder/models/
+packages/rag-builder/raw-knowledge-base/
 
 packages/rag-builder/models
 packages/rag-builder/raw-knowledge-base

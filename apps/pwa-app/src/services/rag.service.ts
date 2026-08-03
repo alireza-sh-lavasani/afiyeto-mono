@@ -56,7 +56,13 @@ export class OfflineRAGService {
 
     if (this.isNative) {
       try {
-        const dbRes = await SqliteVec.initDb({ dbPath: '/data/data/com.afiyet.app/databases/afiyet_med_knowledge.db' });
+        let dbRes;
+        try {
+          dbRes = await SqliteVec.initDb({ dbPath: '/data/data/org.afiyet.mobile/databases/afiyet_med_knowledge.db' });
+        } catch (e1) {
+          console.warn('[RAG Service] Internal DB path failed, trying external SD card path:', e1);
+          dbRes = await SqliteVec.initDb({ dbPath: '/sdcard/Afiyet/databases/afiyet_med_knowledge.db' });
+        }
         console.log('[RAG Service] Native SQLite-vec initialized:', dbRes);
         this.isDbReady = true;
 
@@ -74,31 +80,13 @@ export class OfflineRAGService {
   }
 
   private async initWeb(): Promise<void> {
-    try {
-      console.log('[RAG Service] Booting browser-based Web RAG fallback...');
-      
-      const { pipeline, env } = await import('@xenova/transformers');
-      env.allowRemoteModels = true;
-      
-      try {
-        this.webEmbedder = await pipeline('feature-extraction', 'ncbi/MedCPT-Query-Encoder');
-        console.log('[RAG Service] NIH MedCPT Query Encoder loaded successfully.');
-      } catch (embErr) {
-        console.warn('[RAG Service] Web embedder load skipped, running fast keyword fallback mode.');
-      }
-
-      this.isDbReady = true;
-      this.isModelReady = true;
-    } catch (e) {
-      console.error('[RAG Service] Web initialization error:', e);
-      // Ensure web mode does not hard block UI
-      this.isDbReady = true;
-      this.isModelReady = true;
-    }
+    console.log('[RAG Service] Web mode initialized.');
+    this.isDbReady = true;
+    this.isModelReady = true;
   }
 
   /**
-   * Vectorize search queries
+   * Vectorize search queries (768-dimensional Float32 vector)
    */
   public async getEmbedding(text: string): Promise<number[]> {
     if (!this.isDbReady) await this.init();
@@ -106,18 +94,16 @@ export class OfflineRAGService {
     if (this.isNative) {
       const res = await Llama.getEmbeddings({ input: text });
       return res.embedding;
-    } else {
-      if (this.webEmbedder) {
-        try {
-          const result = await this.webEmbedder(text, { pooling: 'mean', normalize: true });
-          return Array.from(result.data as Float32Array);
-        } catch (e) {
-          console.warn('[RAG Service] Web embedding inference failed, using fallback vector.');
-        }
-      }
-      // Return 384-dim dummy vector for browser dev mode fallback
-      return new Array(384).fill(0.01);
     }
+    
+    // Deterministic 768-dimensional normalized vector generator for browser dev mode
+    const vector = new Array(768).fill(0);
+    const hash = Array.from(text).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    for (let i = 0; i < 768; i++) {
+      vector[i] = Math.sin(hash + i) * 0.15;
+    }
+    const norm = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+    return norm > 0 ? vector.map(v => v / norm) : vector;
   }
 
   /**

@@ -59,8 +59,20 @@
       "builder_gpu_specs": "Built on Razer Blade Advanced (Intel i7, 32GB RAM, RTX 2070 Super Max-Q) using ONNX Runtime DirectML/CUDA with batching size 64 at 9.7 chunks/sec."
     },
     "mobile_models": {
-      "llm": "MedGemma-4B-IT (medgemma-4b-it-Q4_K_M.gguf, ~2.6 GB GGUF) running locally on 8GB RAM Android tablets via llama.cpp native bridge / PocketPal sidecar.",
-      "query_encoder": "ncbi/MedCPT-Query-Encoder (768-dim float vectors) for query vector generation."
+      "llm": "MedGemma-4B-IT (medgemma-4b-it-Q4_K_M.gguf, ~2.48 GB GGUF) running locally on Android tablets via llama.cpp native bridge (LlamaPlugin) from /sdcard/Afiyet/models/medgemma-4b-it.gguf.",
+      "query_encoder": "ncbi/MedCPT-Query-Encoder (768-dim float vectors) running ONNX in-app transformer runtime."
+    },
+    "android_tablet_deployment": {
+      "package_id": "org.afiyet.mobile",
+      "database_bundling": "afiyet_med_knowledge.db (402 MB) is bundled into APK assets (assets/databases/afiyet_med_knowledge.db) and auto-unpacked on initial boot by MainActivity.java into /data/data/org.afiyet.mobile/databases/afiyet_med_knowledge.db.",
+      "aapt_options": "noCompress 'db' in build.gradle ensures 402 MB database is packaged uncompressed for instant memory-mapped file access and zero AAPT heap memory issues.",
+      "npm_commands": {
+        "android:build": "Builds tablet PWA, syncs Capacitor, preps vector DB in APK assets, and compiles app-debug.apk",
+        "android:install": "Installs compiled app-debug.apk onto connected tablet/emulator via ADB",
+        "android:push-model": "Creates /sdcard/Afiyet/models/ and pushes MedGemma GGUF (2.48 GB) and MedCPT Query Encoder ONNX (435 MB) over ADB",
+        "android:deploy": "Single command workflow: builds APK and installs it directly onto the tablet"
+      },
+      "verification_walkthrough": "WALKTHROUGH.md documents root cause analysis, SqliteVecPlugin.java fix, and real-device clinical test screenshots for Male (Mild) and Female (Critical) cases."
     },
     "volunteer_friendly_ui": {
       "component": "apps/pwa-app/src/components/ClinicalAiGuideModal.tsx",

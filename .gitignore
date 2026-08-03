@@ -116,8 +116,13 @@ public/
 .DS_Store
 Thumbs.db
 
+# AI Models & Large Knowledge Base Data
+*.gguf
+*.onnx
+*.bin
+*.safetensors
+*.db
 packages/rag-builder/models/
 packages/rag-builder/raw-knowledge-base/
-
-packages/rag-builder/models
-packages/rag-builder/raw-knowledge-base
+apps/android-app/android/app/src/main/assets/databases/
+models/

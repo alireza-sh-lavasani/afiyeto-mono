@@ -99,6 +99,112 @@ function setupSyncHandlers(syncInstance: any, dbName: string, stateSetter: (stat
     });
 }
 
+// Seed test patients and clinical visits if database is empty
+export async function seedTestPatientsAndVisits() {
+  try {
+    const info = await patientsDb.info();
+    if (info.doc_count <= 1) {
+      console.log('[PouchDB Seed] Seeding Male & Female test patients (Mild & Critical cases)...');
+
+      const patients = [
+        {
+          _id: 'patient_dawit_berhane_01',
+          type: 'patient',
+          fullName: 'Dawit Berhane',
+          gender: 'male',
+          dob: '1998-05-14',
+          patientId: 'DB-19980514-MILD01',
+          nationalId: 'NAT-77481',
+          maritalStatus: 'single',
+          createdAt: new Date().toISOString()
+        },
+        {
+          _id: 'patient_saba_yohannes_02',
+          type: 'patient',
+          fullName: 'Saba Yohannes',
+          gender: 'female',
+          dob: '2023-01-20',
+          patientId: 'SY-20230120-CRIT02',
+          nationalId: 'NAT-99312',
+          maritalStatus: 'single',
+          createdAt: new Date().toISOString()
+        },
+        {
+          _id: 'patient_abeba_haile_03',
+          type: 'patient',
+          fullName: 'Abeba Haile',
+          gender: 'female',
+          dob: '1992-11-03',
+          patientId: 'AH-19921103-MILD03',
+          nationalId: 'NAT-44109',
+          maritalStatus: 'married',
+          createdAt: new Date().toISOString()
+        },
+        {
+          _id: 'patient_yemane_tecle_04',
+          type: 'patient',
+          fullName: 'Yemane Tecle',
+          gender: 'male',
+          dob: '1965-08-19',
+          patientId: 'YT-19650819-CRIT04',
+          nationalId: 'NAT-11205',
+          maritalStatus: 'married',
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      const exams = [
+        {
+          _id: 'exam_dawit_mild_01',
+          type: 'examination',
+          patientId: 'patient_dawit_berhane_01',
+          createdAt: new Date().toISOString(),
+          vitals: { temperature: 37.0, heartRate: 72, systolicBp: 120, diastolicBp: 80 },
+          chiefComplaint: 'Mild rhinitis, sneezing, and low-grade fatigue for 2 days.',
+          symptoms: ['Sneezing', 'Nasal Congestion', 'Mild Fatigue'],
+          notes: 'Patient alert, normal hydration. Mild seasonal rhinitis without fever.'
+        },
+        {
+          _id: 'exam_saba_critical_02',
+          type: 'examination',
+          patientId: 'patient_saba_yohannes_02',
+          createdAt: new Date().toISOString(),
+          vitals: { temperature: 39.8, heartRate: 160, systolicBp: 75, diastolicBp: 45 },
+          chiefComplaint: 'Severe dehydrating diarrhea, repeated vomiting, floppy limp body, high fever.',
+          symptoms: ['Vomiting', 'Severe Diarrhea', 'Lethargy', 'Sunken Eyes', 'High Fever'],
+          notes: 'PEDIATRIC EMERGENCY: Child is floppy, lethargic, unable to drink fluids. Suspected severe dehydration and severe malaria.'
+        },
+        {
+          _id: 'exam_abeba_mild_03',
+          type: 'examination',
+          patientId: 'patient_abeba_haile_03',
+          createdAt: new Date().toISOString(),
+          vitals: { temperature: 36.8, heartRate: 68, systolicBp: 115, diastolicBp: 75 },
+          chiefComplaint: 'Mild localized skin rash on left forearm after gardening.',
+          symptoms: ['Localized Skin Rash', 'Mild Itching'],
+          notes: 'Mild contact dermatitis. No systemic signs, airway involvement, or fever.'
+        },
+        {
+          _id: 'exam_yemane_critical_04',
+          type: 'examination',
+          patientId: 'patient_yemane_tecle_04',
+          createdAt: new Date().toISOString(),
+          vitals: { temperature: 38.5, heartRate: 125, systolicBp: 85, diastolicBp: 50 },
+          chiefComplaint: 'Crushing substernal chest pain radiating to left jaw, severe dyspnea, diaphoresis.',
+          symptoms: ['Chest Pain', 'Shortness of Breath', 'Cold Sweats', 'Hypotension'],
+          notes: 'ACUTE CARDIAC EMERGENCY: Suspected Acute Coronary Syndrome / Myocardial Infarction. Requires immediate IV access and urgent hospital transfer.'
+        }
+      ];
+
+      await patientsDb.bulkDocs(patients);
+      await examinationsDb.bulkDocs(exams);
+      console.log('[PouchDB Seed] Successfully seeded 4 test patients & visits.');
+    }
+  } catch (err) {
+    console.error('[PouchDB Seed] Error seeding test patients:', err);
+  }
+}
+
 // Seed the ICD-10 database on first load if it is empty
 export async function seedICD10Database() {
   try {
@@ -133,8 +239,9 @@ export function startLiveSync() {
   // Fresh remote instances clear browser-cached socket errors/CORS blocks on reconnect
   initRemoteDbs();
 
-  // Seed the ICD-10 database
+  // Seed the ICD-10 database and test patients
   seedICD10Database();
+  seedTestPatientsAndVisits();
 
   patientSync = PouchDB.sync(patientsDb, remotePatientsDb, {
     live: true,

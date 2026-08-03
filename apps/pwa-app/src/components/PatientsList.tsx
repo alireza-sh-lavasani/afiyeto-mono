@@ -11,8 +11,10 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Smile, 
-  UserCheck 
+  UserCheck,
+  Sparkles
 } from 'lucide-react';
+import { ClinicalAiGuideModal, PatientExaminationData } from './ClinicalAiGuideModal';
 
 export const PatientsList: React.FC = () => {
   const { patients } = usePatientService();
@@ -21,6 +23,9 @@ export const PatientsList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
+
+  const [isAiGuideOpen, setIsAiGuideOpen] = useState(false);
+  const [activeAiTest, setActiveAiTest] = useState<PatientExaminationData | null>(null);
 
   // Filter patients by search query
   const filteredPatients = useMemo(() => {
@@ -232,6 +237,14 @@ export const PatientsList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {activeAiTest && (
+        <ClinicalAiGuideModal
+          isOpen={isAiGuideOpen}
+          onClose={() => setIsAiGuideOpen(false)}
+          examData={activeAiTest}
+        />
+      )}
     </div>
   );
 };

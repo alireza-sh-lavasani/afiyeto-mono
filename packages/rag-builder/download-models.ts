@@ -116,12 +116,23 @@ async function main() {
   console.log("=== Afiyet Medical RAG Model Downloader (NIH MedCPT + MedGemma) ===");
 
   try {
-    console.log("\n--- Fetching NIH MedCPT Configs ---");
+    console.log("\n--- Fetching NIH MedCPT Article Encoder Configs ---");
     for (const file of MEDCPT_FILES) {
       const url = `${MEDCPT_ARTICLE_BASE_URL}${file}`;
       const dest = path.join(PRE_EMBEDDING_DIR, file);
       await downloadFile(url, dest);
     }
+
+    console.log("\n--- Fetching NIH MedCPT Query Encoder Configs & ONNX Model ---");
+    const MEDCPT_QUERY_BASE_URL = "https://huggingface.co/ncbi/MedCPT-Query-Encoder/resolve/main/";
+    for (const file of MEDCPT_FILES) {
+      const url = `${MEDCPT_QUERY_BASE_URL}${file}`;
+      const dest = path.join(QUERY_EMBEDDING_DIR, file);
+      await downloadFile(url, dest);
+    }
+    const ONNX_QUERY_URL = "https://huggingface.co/rangan2510/MedCPT-Query-Encoder-ONNX/resolve/main/model.onnx";
+    const queryOnnxDest = path.join(QUERY_EMBEDDING_DIR, "medcpt-query-encoder.onnx");
+    await downloadFile(ONNX_QUERY_URL, queryOnnxDest);
 
     if (!skipLarge) {
       console.log("\n--- Downloading MedGemma LLM Model (GGUF, ~2.6 GB) ---");

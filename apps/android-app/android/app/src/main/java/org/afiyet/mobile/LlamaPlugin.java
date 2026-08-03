@@ -53,8 +53,8 @@ public class LlamaPlugin extends Plugin {
         }
 
         if (!isNativeLoaded) {
-            // Generate deterministic mock vector (384 floats) for local testing
-            float[] mockVector = new float[384];
+            // Generate deterministic mock vector (768 floats) for local testing
+            float[] mockVector = new float[768];
             int hash = text.hashCode();
             for (int i = 0; i < mockVector.length; i++) {
                 // Generate floats between -0.15 and 0.15

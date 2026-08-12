@@ -13,11 +13,16 @@ export function clearSequenceCache(namePart: string, dateKey: string) {
   console.log(`[ID Generator] Cleared sequence cache for: ${cacheKey}`);
 }
 
-/**
- * Generates a unique, sequential patient ID based on name initials and birth date
- */
-export async function generatePatientId(fullName: string, birthDateIso: string): Promise<string> {
-  const { namePart, dateKey } = generatePatientIdInitials(fullName, birthDateIso);
+export async function generatePatientId(
+  firstNameOrFullName: string,
+  lastNameOrBirthDate: string,
+  birthDateIso?: string
+): Promise<string> {
+  const { namePart, dateKey } = generatePatientIdInitials(
+    firstNameOrFullName,
+    lastNameOrBirthDate,
+    birthDateIso
+  );
   const cacheKey = `${namePart}:${dateKey}`;
 
   // 1. Check in-memory sequence cache first

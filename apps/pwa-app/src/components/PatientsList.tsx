@@ -63,7 +63,7 @@ export const PatientsList: React.FC = () => {
           <Smile className="h-8 w-8" />
         </div>
         <div className="flex flex-col gap-1 max-w-sm">
-          <h3 className="font-semibold text-lg text-foreground">No Patients Registered</h3>
+          <h3 className="font-semibold text-lg text-foreground">{t('patientsList.noPatientsTitle', { defaultValue: 'No Patients Registered' })}</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {t('patientsList.noPatientsMessage')}
           </p>
@@ -84,7 +84,7 @@ export const PatientsList: React.FC = () => {
       {/* Header and Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h3 className="font-bold text-xl text-foreground">Registered Patients</h3>
+          <h3 className="font-bold text-xl text-foreground">{t('patientsList.pageTitle', { defaultValue: 'Registered Patients' })}</h3>
           <span className="text-xs text-muted-foreground">
             {t('patientsList.totalPatients')} {patients.length}
           </span>
@@ -97,7 +97,7 @@ export const PatientsList: React.FC = () => {
             </span>
             <input
               type="text"
-              placeholder="Search by name, ID or Gov ID..."
+              placeholder={t('patientsList.searchPlaceholder', { defaultValue: 'Search by name, ID or Gov ID...' })}
               value={searchQuery}
               onChange={handleSearchChange}
               className="w-full bg-card border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
@@ -109,7 +109,7 @@ export const PatientsList: React.FC = () => {
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white font-semibold text-sm rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/10 shrink-0"
           >
             <UserPlus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Patient</span>
+            <span className="hidden sm:inline">{t('patientsList.addPatientMini', { defaultValue: 'Add Patient' })}</span>
           </Link>
         </div>
       </div>
@@ -123,14 +123,14 @@ export const PatientsList: React.FC = () => {
                 <th className="py-4 px-6">{t('patientsList.listColumns.fullName')}</th>
                 <th className="py-4 px-6">{t('patientsList.listColumns.birthDate')}</th>
                 <th className="py-4 px-6">{t('patientsList.listColumns.patientId')}</th>
-                <th className="py-4 px-6 text-right">Actions</th>
+                <th className="py-4 px-6 text-right">{t('patientsList.actionsColumn', { defaultValue: 'Actions' })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60 text-sm text-foreground">
               {paginatedPatients.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="py-12 text-center text-muted-foreground">
-                    No matching records found.
+                    {t('patientsList.noMatchingRecords', { defaultValue: 'No matching records found.' })}
                   </td>
                 </tr>
               ) : (
@@ -166,7 +166,7 @@ export const PatientsList: React.FC = () => {
                         </span>
                         {idType === EIdType.TEMP && (
                           <span className="ml-1.5 text-[9px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1 py-0.5 rounded uppercase">
-                            Temp
+                            {t('patientsList.tempBadge', { defaultValue: 'Temp' })}
                           </span>
                         )}
                       </td>
@@ -177,7 +177,7 @@ export const PatientsList: React.FC = () => {
                             params={{ patientId }}
                             className="inline-flex items-center px-2.5 py-1.5 rounded-lg border border-border hover:border-border hover:bg-secondary/50 text-xs font-medium text-foreground transition-all"
                           >
-                            Edit Profile
+                            {t('patientsList.editProfile', { defaultValue: 'Edit Profile' })}
                           </Link>
                           
                           <Link
@@ -203,7 +203,7 @@ export const PatientsList: React.FC = () => {
         {filteredPatients.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 border-t border-border/80 bg-card/30 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span>Rows per page:</span>
+              <span>{t('patientsList.rowsPerPage', { defaultValue: 'Rows per page:' })}</span>
               <select
                 value={rowsPerPage}
                 onChange={handleRowsChange}
@@ -214,7 +214,7 @@ export const PatientsList: React.FC = () => {
                 <option value={40}>40</option>
                 <option value={60}>60</option>
               </select>
-              <span>{from + 1} - {to} of {filteredPatients.length}</span>
+              <span>{from + 1} - {to} {t('patientsList.of', { defaultValue: 'of' })} {filteredPatients.length}</span>
             </div>
 
             <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -225,7 +225,7 @@ export const PatientsList: React.FC = () => {
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="font-semibold text-foreground">Page {page + 1} of {totalPages || 1}</span>
+              <span className="font-semibold text-foreground">{t('patientsList.page', { defaultValue: 'Page' })} {page + 1} {t('patientsList.of', { defaultValue: 'of' })} {totalPages || 1}</span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}

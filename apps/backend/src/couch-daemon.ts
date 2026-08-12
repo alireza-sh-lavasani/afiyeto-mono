@@ -8,17 +8,29 @@ let queuePromise = Promise.resolve();
  * Reconciles temporary patient IDs with permanent sequential IDs
  */
 async function handlePatientIdReconciliation(doc: any) {
-  const patientName = doc.name || doc.fullName || '';
+  let firstName = doc.firstName || '';
+  let lastName = doc.lastName || '';
   const birthDate = doc.birthDate;
 
-  if (!patientName || !birthDate) {
-    console.warn(`[Couch Daemon] Document ${doc._id} is missing name or birthDate. Skipping.`);
+  if (!birthDate) {
+    console.warn(`[Couch Daemon] Document ${doc._id} is missing birthDate. Skipping.`);
     return;
+  }
+
+  if (!firstName || !lastName) {
+    const fullName = doc.fullName || doc.name || '';
+    if (!fullName) {
+      console.warn(`[Couch Daemon] Document ${doc._id} is missing name/firstName/lastName. Skipping.`);
+      return;
+    }
+    const parts = fullName.trim().split(/\s+/);
+    firstName = parts[0] || '';
+    lastName = parts.slice(1).join(' ') || '';
   }
 
   try {
     // 1. Generate new permanent ID
-    const newPatientId = await generatePatientId(patientName, birthDate);
+    const newPatientId = await generatePatientId(firstName, lastName, birthDate);
     
     // 2. Refresh document metadata or get latest to minimize conflicts
     let latestDoc = doc;
@@ -44,7 +56,7 @@ async function handlePatientIdReconciliation(doc: any) {
     console.log(`[Couch Daemon] Successfully reconciled patient doc ${doc._id} -> permanent ID: ${newPatientId}`);
   } catch (error: any) {
     // Clear cache on conflicts so we don't leak sequence numbers
-    const { namePart, dateKey } = generatePatientIdInitials(patientName, birthDate);
+    const { namePart, dateKey } = generatePatientIdInitials(firstName, lastName, birthDate);
     clearSequenceCache(namePart, dateKey);
 
     if (error.statusCode === 409) {

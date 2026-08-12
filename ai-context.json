@@ -1,7 +1,7 @@
 {
   "project": "afiyet",
   "version": "1.0.0",
-  "last_updated": "2026-08-02",
+  "last_updated": "2026-08-12",
   "historical_layout": {
     "root": "C:/projects/afiyet/",
     "repos": {
@@ -15,14 +15,14 @@
   "modernization_architecture": {
     "target_workspace": "C:/projects/afiyet-mono/ (NPM Monorepo)",
     "packages": {
-      "packages/shared": "Exports raw Typescript Zod validation schemas & interfaces directly across packages.",
-      "apps/pwa-app": "Vite PWA SPA supporting tablet mode (VITE_APP_TARGET=tablet) and web dashboard (VITE_APP_TARGET=dashboard). Includes ClinicalAiGuideModal for volunteer-friendly step-by-step guidance (plain English + medical terms in parentheses) on both active examination forms and historical visit summaries.",
-      "apps/backend": "Lightweight Fastify server with tsx runtime, direct CouchDB changes feed integration for sequential patient ID generation, Zod validation, and automatic CouchDB CORS setup on boot.",
+      "packages/shared": "Exports raw Typescript Zod validation schemas & interfaces directly across packages. Standardizes split mandatory patient names (firstName & lastName) with optional computed fullName, and updated generatePatientIdInitials helper.",
+      "apps/pwa-app": "Vite PWA SPA supporting tablet mode (VITE_APP_TARGET=tablet) and web dashboard (VITE_APP_TARGET=dashboard). Includes real-time form autosaving (1-second debounce to PouchDB), validation error toast alerts, 120-year max age limit for DOB, reusable InfoButton popovers for clinical guidelines, dynamic preset chip localization (translatePreset) saving English strings in DB, split name inputs with autosave guards, location card hiding with default background coordinates, complete multi-language support (EN, AR, TI) across forms, previews, and PatientsList.tsx, and ClinicalAiGuideModal for volunteer-friendly clinical guidance.",
+      "apps/backend": "Lightweight Fastify server with tsx runtime, direct CouchDB changes feed integration for sequential patient ID generation (supporting split firstName/lastName and legacy fullName parsing), Zod validation, and automatic CouchDB CORS setup on boot.",
       "packages/rag-builder": "High-performance GPU matrix embedding builder (ncbi/MedCPT-Article-Encoder, sqlite-vec, FTS5) with GPU batching (64 items/call) and incremental append mode.",
       "packages/rag-eval": "Retrieval evaluation benchmark package using ncbi/MedCPT-Query-Encoder measuring Context Recall@5 and Zod schema compliance."
     },
     "database_transition": {
-      "client": "Realm DB -> PouchDB (browser IndexedDB storage) using single VITE_COUCHDB_BASE_URL variable for LAN target configuration. Includes dynamic seeding of offline afiyet_icd10 (500+ diagnostic entries) and afiyet_custom_entries.",
+      "client": "Realm DB -> PouchDB (browser IndexedDB storage) using single VITE_COUCHDB_BASE_URL variable for LAN target configuration. Deferring initial draft document creation until firstName, lastName, and birthDate are populated to prevent invalid IDs. Includes dynamic seeding of offline afiyet_icd10 (500+ diagnostic entries) and afiyet_custom_entries.",
       "server": "MongoDB -> CouchDB. Backend configures afiyet_patients, afiyet_examinations, afiyet_icd10, and afiyet_custom_entries on startup.",
       "replication": "Replaced manual pako transaction queue sync with native PouchDB-to-CouchDB sync (PouchDB.sync live, retry). Support for manual resync with overlay toast notifications.",
       "automatic_server_provisioning": "Fastify backend automatically configures CouchDB CORS endpoints on startup."
@@ -34,11 +34,11 @@
       "locales": {
         "languages": ["en", "ar", "ti"],
         "rtl": ["ar"],
-        "layout": "i18n.ts applies document.documentElement.dir = 'rtl' dynamically"
+        "layout": "i18n.ts applies document.documentElement.dir = 'rtl' dynamically. Full translation keys structured across card namespaces (vitalsCard, extendedVitalsCard, rapidTestsCard, clinicalAssessmentCard, reproductiveHealthCard, clinicalPhotosCard, presets)."
       }
     },
     "test_suites": {
-      "pwa_tests": "Run via 'npm run test:pwa'. Covers offline PouchDB integration tests and form validation tests with Vitest.",
+      "pwa_tests": "Run via 'npm run test:pwa'. Covers offline PouchDB integration tests, split name validations, and form validation tests with Vitest.",
       "rag_tests": "Run via 'npm run test:rag'. Evaluates retrieval recall and clinical response schema validation."
     }
   },

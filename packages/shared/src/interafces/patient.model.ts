@@ -1,7 +1,9 @@
 export interface IPatient {
   education?: string;
   emmergencyContact?: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
+  fullName?: string;
   gender: string;
   maritalStatus: string;
   uniqueGovID?: string;

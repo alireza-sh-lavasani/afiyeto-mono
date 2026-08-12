@@ -11,26 +11,37 @@ export function padNumber(num: number, length: number): string {
 }
 
 // Helper function to extract initials from a full name
-function extractNamePart(fullName: string): string {
-  const nameParts = fullName.trim().split(' ');
-  const initials =
-    nameParts.length >= 2
-      ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
-      : fullName.slice(0, 2).toUpperCase();
-  return initials;
-}
-
 // Function to generate a 4-digit random sequence number
 export function generateRandomSequenceNumber(): number {
   return Math.floor(Math.random() * 10000); // 4-digit random number between 0000 and 9999
 }
 
 export function generatePatientIdInitials(
-  fullName: string,
-  birthDateIso: string
+  firstNameOrFullName: string,
+  lastNameOrBirthDate: string,
+  birthDateIso?: string
 ): IGeneratePatientId {
-  const namePart = extractNamePart(fullName); // Extract initials from full name
-  const dateKey = moment(birthDateIso).format('YYYYMMDD'); // Format birthdate as YYYYMMDD
+  let firstName = '';
+  let lastName = '';
+  let birthDate = '';
+
+  if (birthDateIso !== undefined) {
+    firstName = firstNameOrFullName;
+    lastName = lastNameOrBirthDate;
+    birthDate = birthDateIso;
+  } else {
+    // Backward compatibility: first parameter is fullName, second is birthDate
+    const fullName = firstNameOrFullName;
+    birthDate = lastNameOrBirthDate;
+    const parts = fullName.trim().split(/\s+/);
+    firstName = parts[0] || '';
+    lastName = parts.slice(1).join(' ') || '';
+  }
+
+  const f = firstName.trim().charAt(0).toUpperCase() || 'X';
+  const l = lastName.trim().charAt(0).toUpperCase() || 'X';
+  const namePart = f + l;
+  const dateKey = moment(birthDate).format('YYYYMMDD');
 
   return { namePart, dateKey };
 }

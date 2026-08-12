@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import moment from 'moment';
@@ -17,6 +17,7 @@ import { usePatientService } from '../services/patient.service.ts';
 import { useCustomEntries } from '../services/custom-entries.service.ts';
 import { zobas, subZobas, EZoba } from './zobas.ts';
 import { useNavigate } from '@tanstack/react-router';
+import { InfoButton } from './InfoButton.tsx';
 import {
   Camera,
   RefreshCw,
@@ -40,7 +41,9 @@ interface PersonalInfoFormProps {
 
 interface PatientFormValues {
   uniqueGovID: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
+  fullName?: string;
   birthDate: string;
   gender: string;
   emmergencyContact: string;
@@ -75,10 +78,33 @@ interface TagInputProps {
   value: string[];
   onChange: (val: string[]) => void;
   placeholder: string;
+  presetType?: 'allergy' | 'chronic_condition' | 'disability';
 }
 
-const TagInput: React.FC<TagInputProps> = ({ presets, value = [], onChange, placeholder }) => {
+const getPresetKey = (field: string, val: string) => {
+  const cleanVal = val
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+  return `presets.${field}.${cleanVal}`;
+};
+
+export const translatePreset = (field: string, val: string, t: any) => {
+  if (!field) return val;
+  const key = getPresetKey(field, val);
+  const translated = t(key);
+  return translated === key ? val : translated;
+};
+
+const TagInput: React.FC<TagInputProps> = ({ presets, value = [], onChange, placeholder, presetType }) => {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState('');
+
+  const translatePresetLocal = useCallback((val: string) => {
+    if (!presetType) return val;
+    return translatePreset(presetType, val, t);
+  }, [presetType, t]);
 
   const handleAdd = () => {
     const trimmed = inputValue.trim();
@@ -108,7 +134,7 @@ const TagInput: React.FC<TagInputProps> = ({ presets, value = [], onChange, plac
               key={tag}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-sky-500/20 text-primary text-xs font-semibold rounded-lg"
             >
-              <span>{tag}</span>
+              <span>{translatePresetLocal(tag)}</span>
               <button
                 type="button"
                 onClick={() => handleRemove(tag)}
@@ -142,7 +168,7 @@ const TagInput: React.FC<TagInputProps> = ({ presets, value = [], onChange, plac
           className="px-4 py-2.5 bg-secondary border border-border text-foreground hover:bg-slate-700 rounded-xl text-sm font-semibold transition-all flex items-center gap-1"
         >
           <Plus className="h-4 w-4" />
-          <span>Add</span>
+          <span>{t('personalInfo.addItem', { defaultValue: 'Add' })}</span>
         </button>
       </div>
 
@@ -158,7 +184,7 @@ const TagInput: React.FC<TagInputProps> = ({ presets, value = [], onChange, plac
                 onClick={() => handlePresetClick(preset)}
                 className="px-2.5 py-1 bg-secondary/50 hover:bg-secondary border border-border/65 text-[10px] font-medium text-muted-foreground hover:text-foreground rounded-lg transition-all"
               >
-                {preset}
+                {translatePresetLocal(preset)}
               </button>
             ))}
         </div>
@@ -190,6 +216,58 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
   const [customOccupationActive, setCustomOccupationActive] = useState(false);
   const [customOccupationValue, setCustomOccupationValue] = useState('');
 
+  const [activePatientId, setActivePatientId] = useState<string | undefined>(
+    mode === 'edit' && patientData ? (patientData.patientId || patientData.tmpPatientId || patientData._id) : undefined
+  );
+  const activePatientIdRef = useRef<string | undefined>(activePatientId);
+  activePatientIdRef.current = activePatientId;
+
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerAutoSave = useCallback((data: any) => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const payload = {
+        ...data,
+        fullName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+        ethnicity: customEthnicityActive ? customEthnicityValue.trim() : data.ethnicity,
+        occupation: customOccupationActive ? customOccupationValue.trim() : data.occupation,
+        householdSize: data.householdSize ? parseInt(data.householdSize, 10) : undefined,
+        numberOfPregnancies: data.numberOfPregnancies ? parseInt(data.numberOfPregnancies, 10) : undefined,
+        numberOfLiveBirths: data.numberOfLiveBirths ? parseInt(data.numberOfLiveBirths, 10) : undefined,
+        image: capturedImage ? { base64: capturedImage } : undefined,
+      };
+
+      try {
+        if (!activePatientIdRef.current) {
+          if (!payload.firstName?.trim() || !payload.lastName?.trim() || !payload.birthDate) {
+            return;
+          }
+          console.log('[Autosave] Creating patient draft...');
+          const newPatient = await createPatient(payload);
+          setActivePatientId(newPatient.patientId || newPatient.tmpPatientId || newPatient._id);
+        } else {
+          console.log('[Autosave] Updating patient draft:', activePatientIdRef.current);
+          await updatePatient(activePatientIdRef.current, payload);
+        }
+      } catch (error) {
+        console.error('[Autosave] Error auto-saving patient:', error);
+      }
+    }, 1000);
+  }, [createPatient, updatePatient, customEthnicityActive, customEthnicityValue, customOccupationActive, customOccupationValue, capturedImage]);
+
+  const parsedNames = useMemo(() => {
+    let firstName = patientData?.firstName || '';
+    let lastName = patientData?.lastName || '';
+    if (mode === 'edit' && patientData && (!firstName || !lastName)) {
+      const parts = (patientData.fullName || '').trim().split(/\s+/);
+      firstName = parts[0] || '';
+      lastName = parts.slice(1).join(' ') || '';
+    }
+    return { firstName, lastName };
+  }, [patientData, mode]);
+
   const {
     control,
     handleSubmit,
@@ -201,6 +279,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
       mode === 'edit' && patientData
         ? {
             uniqueGovID: patientData.uniqueGovID || '',
+            firstName: parsedNames.firstName,
+            lastName: parsedNames.lastName,
             fullName: patientData.fullName || '',
             birthDate: patientData.birthDate
               ? moment(patientData.birthDate).format('YYYY-MM-DD')
@@ -233,6 +313,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
           }
         : {
             uniqueGovID: '',
+            firstName: '',
+            lastName: '',
             fullName: '',
             birthDate: '',
             gender: 'male',
@@ -265,6 +347,28 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
   const gender = watch('gender');
   const isPregnant = watch('isPregnant');
   const selectedZoba = watch('residenceZoba') as EZoba | '';
+
+  const formValues = watch();
+
+  useEffect(() => {
+    const hasImageChanged = capturedImage !== (patientData?.image?.base64 || null);
+    const shouldSave = isDirty || hasImageChanged;
+    if (!shouldSave) return;
+
+    triggerAutoSave(formValues);
+  }, [
+    formValues,
+    capturedImage,
+    isDirty,
+    triggerAutoSave,
+    patientData
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, []);
 
   // Get combined presets + user-created custom entries from hook
   const mergedEthnicityOptions = getMergedOptions('ethnicity', ETHNICITY_PRESETS);
@@ -319,6 +423,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
   const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true);
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
 
       // Save custom values to database asynchronously so they appear as dropdown options in future
       if (customEthnicityActive && customEthnicityValue.trim()) {
@@ -338,13 +443,10 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         image: capturedImage ? { base64: capturedImage } : undefined,
       };
 
-      if (mode === 'create') {
+      if (!activePatientIdRef.current) {
         await createPatient(payload);
-      } else if (mode === 'edit' && patientData) {
-        const hasFormChanged = isDirty || capturedImage !== (patientData?.image?.base64 || null);
-        if (hasFormChanged) {
-          await updatePatient(patientData.patientId || patientData.tmpPatientId || '', payload);
-        }
+      } else {
+        await updatePatient(activePatientIdRef.current, payload);
       }
 
       navigate({ to: '/' });
@@ -353,6 +455,18 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const onFormError = (errors: any) => {
+    console.log('Form validation errors:', errors);
+    window.dispatchEvent(
+      new CustomEvent('afiyet_sync_toast', {
+        detail: {
+          type: 'error',
+          message: t('validation.formHasErrors'),
+        },
+      })
+    );
   };
 
   return (
@@ -368,13 +482,13 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         </button>
         <div className="flex flex-col">
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
-            {mode === 'create' ? t('personalInfo.formTitle') : 'Update Patient Profile'}
+            {mode === 'create' ? t('personalInfo.formTitle') : t('personalInfo.formTitleEdit')}
           </h2>
-          <span className="text-xs text-muted-foreground">Clinical Demographic & Medical Intake</span>
+          <span className="text-xs text-muted-foreground">{t('personalInfo.formSubtitle')}</span>
         </div>
       </div>
 
-      <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form noValidate onSubmit={handleSubmit(onSubmit, onFormError)} className="space-y-8">
         {/* Photo Section */}
         <div className="flex flex-col items-center sm:flex-row gap-6 bg-background/40 p-5 rounded-2xl border border-border/80">
           <div className="relative h-28 w-28 rounded-full border border-border/80 overflow-hidden bg-secondary flex items-center justify-center shrink-0">
@@ -442,15 +556,16 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         {/* Core Profile Section */}
         <div className="space-y-4">
           <h3 className="text-sm font-bold text-primary border-b border-border pb-2">
-            Intake Basics
+            {t('personalInfo.sectionBasics')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-4">
               {/* Gov ID */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t('personalInfo.uniqueGovID')}
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                  <span>{t('personalInfo.uniqueGovID')}</span>
+                  <InfoButton translationKey="personalInfo.uniqueGovIDInfo" label={t('personalInfo.uniqueGovID')} />
                 </label>
                 <Controller
                   control={control}
@@ -462,24 +577,24 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                       onChange={onChange}
                       value={value}
                       className="bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-slate-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                      placeholder="Enter National ID Number"
+                      placeholder={t('personalInfo.uniqueGovIDPlaceholder')}
                     />
                   )}
                 />
               </div>
 
-              {/* Full Name */}
+              {/* First Name */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
-                  <span>{t('personalInfo.fullName')}</span>
+                  <span>{t('personalInfo.firstName')}</span>
                   <span className="text-red-500 ml-1 font-bold">*</span>
+                  <InfoButton translationKey="personalInfo.firstNameInfo" label={t('personalInfo.firstName')} />
                 </label>
                 <Controller
                   control={control}
-                  name="fullName"
+                  name="firstName"
                   rules={{
-                    required: t('validation.nameRequired'),
-                    minLength: { value: 2, message: t('validation.nameMinLength') },
+                    required: t('validation.firstNameRequired'),
                   }}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <input
@@ -488,18 +603,54 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                       onChange={onChange}
                       value={value}
                       className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-slate-600 focus:outline-none focus:ring-1 transition-all ${
-                        errors.fullName
+                        errors.firstName
                           ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500'
                           : 'border-border focus:border-primary focus:ring-primary'
                       }`}
-                      placeholder="Enter Full Name"
+                      placeholder={t('personalInfo.firstNamePlaceholder')}
                     />
                   )}
                 />
-                {errors.fullName && (
+                {errors.firstName && (
                   <span className="text-xs text-red-400 mt-1 flex items-center gap-1">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                    <span>{errors.fullName.message}</span>
+                    <span>{errors.firstName.message}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Last Name */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                  <span>{t('personalInfo.lastName')}</span>
+                  <span className="text-red-500 ml-1 font-bold">*</span>
+                  <InfoButton translationKey="personalInfo.lastNameInfo" label={t('personalInfo.lastName')} />
+                </label>
+                <Controller
+                  control={control}
+                  name="lastName"
+                  rules={{
+                    required: t('validation.lastNameRequired'),
+                  }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <input
+                      type="text"
+                      onBlur={onBlur}
+                      onChange={onChange}
+                      value={value}
+                      className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-slate-600 focus:outline-none focus:ring-1 transition-all ${
+                        errors.lastName
+                          ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500'
+                          : 'border-border focus:border-primary focus:ring-primary'
+                      }`}
+                      placeholder={t('personalInfo.lastNamePlaceholder')}
+                    />
+                  )}
+                />
+                {errors.lastName && (
+                  <span className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    <span>{errors.lastName.message}</span>
                   </span>
                 )}
               </div>
@@ -509,6 +660,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
                   <span>{t('personalInfo.birthDate')}</span>
                   <span className="text-red-500 ml-1 font-bold">*</span>
+                  <InfoButton translationKey="personalInfo.birthDateInfo" label={t('personalInfo.birthDate')} />
                 </label>
                 <Controller
                   control={control}
@@ -518,6 +670,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     validate: (val) => {
                       if (moment(val).isAfter(moment())) {
                         return t('validation.birthDateFuture');
+                      }
+                      if (moment(val).isBefore(moment().subtract(120, 'years'))) {
+                        return t('validation.birthDateTooOld');
                       }
                       return true;
                     },
@@ -529,6 +684,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                       onChange={onChange}
                       value={value}
                       max={moment().format('YYYY-MM-DD')}
+                      min={moment().subtract(120, 'years').format('YYYY-MM-DD')}
                       className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 transition-all ${
                         errors.birthDate
                           ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500'
@@ -553,6 +709,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
                   <span>{t('personalInfo.gender')}</span>
                   <span className="text-red-500 ml-1 font-bold">*</span>
+                  <InfoButton translationKey="personalInfo.genderInfo" label={t('personalInfo.gender')} />
                 </label>
                 <Controller
                   control={control}
@@ -608,8 +765,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
               {/* Education select */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t('personalInfo.education')}
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                  <span>{t('personalInfo.education')}</span>
+                  <InfoButton translationKey="personalInfo.educationInfo" label={t('personalInfo.education')} />
                 </label>
                 <Controller
                   control={control}
@@ -636,6 +794,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
                   <span>{t('personalInfo.maritalStatus')}</span>
                   <span className="text-red-500 ml-1 font-bold">*</span>
+                  <InfoButton translationKey="personalInfo.maritalStatusInfo" label={t('personalInfo.maritalStatus')} />
                 </label>
                 <Controller
                   control={control}
@@ -696,13 +855,14 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
           <div className="flex items-center gap-2 text-primary border-b border-border pb-2">
             <Phone className="h-5 w-5" />
-            <h3 className="font-bold text-foreground">Contact & Identity</h3>
+            <h3 className="font-bold text-foreground">{t('personalInfo.sectionContact')}</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
             {/* Phone Number */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Phone Number
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.phoneNumber')}</span>
+                <InfoButton translationKey="personalInfo.phoneNumberInfo" label={t('personalInfo.phoneNumber')} />
               </label>
               <Controller
                 control={control}
@@ -719,7 +879,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onBlur={onBlur}
                     onChange={onChange}
                     value={value}
-                    placeholder="Enter phone number"
+                    placeholder={t('personalInfo.phoneNumberPlaceholder')}
                     className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
                       errors.phoneNumber ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
@@ -728,7 +888,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
               />
               {errors.phoneNumber && (
                 <span className="text-xs text-red-400 mt-1 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                   <span>{errors.phoneNumber.message}</span>
                 </span>
               )}
@@ -736,8 +896,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Emergency Contact */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                {t('personalInfo.emmergencyContact')}
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.emmergencyContact')}</span>
+                <InfoButton translationKey="personalInfo.emmergencyContactInfo" label={t('personalInfo.emmergencyContact')} />
               </label>
               <Controller
                 control={control}
@@ -757,13 +918,13 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-slate-600 focus:outline-none transition-all ${
                       errors.emmergencyContact ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
-                    placeholder="Enter emergency phone number"
+                    placeholder={t('personalInfo.emmergencyContactPlaceholder')}
                   />
                 )}
               />
               {errors.emmergencyContact && (
                 <span className="text-xs text-red-400 mt-1 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                   <span>{errors.emmergencyContact.message}</span>
                 </span>
               )}
@@ -771,8 +932,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Nationality */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Nationality
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.nationality')}</span>
+                <InfoButton translationKey="personalInfo.nationalityInfo" label={t('personalInfo.nationality')} />
               </label>
               <Controller
                 control={control}
@@ -783,7 +945,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onBlur={onBlur}
                     onChange={onChange}
                     value={value}
-                    placeholder="Nationality"
+                    placeholder={t('personalInfo.nationalityPlaceholder')}
                     className="bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
                   />
                 )}
@@ -792,8 +954,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Blood Type */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Blood Type
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.bloodType')}</span>
+                <InfoButton translationKey="personalInfo.bloodTypeInfo" label={t('personalInfo.bloodType')} />
               </label>
               <Controller
                 control={control}
@@ -816,8 +979,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Ethnicity Select (Combo Option) */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Ethnicity
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.ethnicity')}</span>
+                <InfoButton translationKey="personalInfo.ethnicityInfo" label={t('personalInfo.ethnicity')} />
               </label>
               <div className="space-y-2">
                 {!customEthnicityActive ? (
@@ -838,13 +1002,13 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                           }}
                           className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
                         >
-                          <option value="">Select Ethnicity</option>
+                          <option value="">{t('personalInfo.ethnicity')}</option>
                           {mergedEthnicityOptions.map((opt) => (
                             <option key={opt} value={opt}>
-                              {opt}
+                              {translatePreset('ethnicity', opt, t)}
                             </option>
                           ))}
-                          <option value="__custom__">+ Enter Custom...</option>
+                          <option value="__custom__">+ {t('personalInfo.addCustom')}</option>
                         </select>
                       </div>
                     )}
@@ -853,7 +1017,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Type custom ethnicity..."
+                      placeholder={t('personalInfo.ethnicityPlaceholder')}
                       value={customEthnicityValue}
                       onChange={(e) => setCustomEthnicityValue(e.target.value)}
                       className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
@@ -866,7 +1030,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                       }}
                       className="px-3 bg-secondary border border-border text-foreground hover:bg-slate-700 rounded-xl text-xs font-semibold transition-all"
                     >
-                      Cancel
+                      {t('visit.formNavigation.prevStep', { defaultValue: 'Cancel' })}
                     </button>
                   </div>
                 )}
@@ -875,8 +1039,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Occupation Select (Combo Option) */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Occupation
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.occupation')}</span>
+                <InfoButton translationKey="personalInfo.occupationInfo" label={t('personalInfo.occupation')} />
               </label>
               <div className="space-y-2">
                 {!customOccupationActive ? (
@@ -897,13 +1062,13 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                           }}
                           className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
                         >
-                          <option value="">Select Occupation</option>
+                          <option value="">{t('personalInfo.occupation')}</option>
                           {mergedOccupationOptions.map((opt) => (
                             <option key={opt} value={opt}>
-                              {opt}
+                              {translatePreset('occupation', opt, t)}
                             </option>
                           ))}
-                          <option value="__custom__">+ Enter Custom...</option>
+                          <option value="__custom__">+ {t('personalInfo.addCustom')}</option>
                         </select>
                       </div>
                     )}
@@ -912,7 +1077,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Type custom occupation..."
+                      placeholder={t('personalInfo.occupationPlaceholder')}
                       value={customOccupationValue}
                       onChange={(e) => setCustomOccupationValue(e.target.value)}
                       className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
@@ -925,7 +1090,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                       }}
                       className="px-3 bg-secondary border border-border text-foreground hover:bg-slate-700 rounded-xl text-xs font-semibold transition-all"
                     >
-                      Cancel
+                      {t('visit.formNavigation.prevStep', { defaultValue: 'Cancel' })}
                     </button>
                   </div>
                 )}
@@ -938,13 +1103,14 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
           <div className="flex items-center gap-2 text-primary border-b border-border pb-2">
             <Home className="h-5 w-5" />
-            <h3 className="font-bold text-foreground">Permanent Residence</h3>
+            <h3 className="font-bold text-foreground">{t('personalInfo.sectionResidence')}</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
             {/* Zoba */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Zoba
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.residenceZoba')}</span>
+                <InfoButton translationKey="personalInfo.residenceZobaInfo" label={t('personalInfo.residenceZoba')} />
               </label>
               <Controller
                 control={control}
@@ -958,7 +1124,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     }}
                     className="bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
                   >
-                    <option value="">Select Zoba</option>
+                    <option value="">{t('personalInfo.residenceZoba')}</option>
                     {zobas.map((z) => (
                       <option key={z.value} value={z.value}>
                         {z.title}
@@ -971,8 +1137,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Sub Zoba */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Sub Zoba
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.residenceSubZoba')}</span>
+                <InfoButton translationKey="personalInfo.residenceSubZobaInfo" label={t('personalInfo.residenceSubZoba')} />
               </label>
               <Controller
                 control={control}
@@ -984,7 +1151,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     disabled={!selectedZoba}
                     className="bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary disabled:opacity-40"
                   >
-                    <option value="">Select Sub Zoba</option>
+                    <option value="">{t('personalInfo.residenceSubZoba')}</option>
                     {selectedZoba &&
                       subZobas[selectedZoba].map((s) => (
                         <option key={s.value} value={s.value}>
@@ -998,8 +1165,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Village / Locality */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Village / Locality
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.residenceVillage')}</span>
+                <InfoButton translationKey="personalInfo.residenceVillageInfo" label={t('personalInfo.residenceVillage')} />
               </label>
               <Controller
                 control={control}
@@ -1010,7 +1178,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onBlur={onBlur}
                     onChange={onChange}
                     value={value}
-                    placeholder="Enter Village / Town"
+                    placeholder={t('personalInfo.residenceVillagePlaceholder')}
                     className="bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
                   />
                 )}
@@ -1023,13 +1191,14 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
           <div className="flex items-center gap-2 text-primary border-b border-border pb-2">
             <Droplets className="h-5 w-5" />
-            <h3 className="font-bold text-foreground">Social & Environmental Factors</h3>
+            <h3 className="font-bold text-foreground">{t('personalInfo.sectionSocialDeterminants')}</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
             {/* Household Size */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Household Size (1-100)
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.householdSize')}</span>
+                <InfoButton translationKey="personalInfo.householdSizeInfo" label={t('personalInfo.householdSize')} />
               </label>
               <Controller
                 control={control}
@@ -1046,7 +1215,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onBlur={onBlur}
                     onChange={onChange}
                     value={value}
-                    placeholder="e.g. 5"
+                    placeholder={t('personalInfo.householdSizePlaceholder')}
                     className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
                       errors.householdSize ? 'border-red-500/80' : 'border-border focus:border-primary'
                     }`}
@@ -1063,8 +1232,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Water Source */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Water Source
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.waterSource')}</span>
+                <InfoButton translationKey="personalInfo.waterSourceInfo" label={t('personalInfo.waterSource')} />
               </label>
               <Controller
                 control={control}
@@ -1075,7 +1245,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onChange={onChange}
                     className="bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
                   >
-                    <option value="">Select Water Source</option>
+                    <option value="">{t('personalInfo.waterSource')}</option>
                     {WATER_SOURCE_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
@@ -1088,8 +1258,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Sanitation Type */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Sanitation Type
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.sanitationType')}</span>
+                <InfoButton translationKey="personalInfo.sanitationTypeInfo" label={t('personalInfo.sanitationType')} />
               </label>
               <Controller
                 control={control}
@@ -1100,7 +1271,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     onChange={onChange}
                     className="bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
                   >
-                    <option value="">Select Sanitation Type</option>
+                    <option value="">{t('personalInfo.sanitationType')}</option>
                     {SANITATION_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
@@ -1117,13 +1288,14 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
         <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
           <div className="flex items-center gap-2 text-primary border-b border-border pb-2">
             <Heart className="h-5 w-5" />
-            <h3 className="font-bold text-foreground">Medical History</h3>
+            <h3 className="font-bold text-foreground">{t('personalInfo.sectionMedicalHistory')}</h3>
           </div>
           <div className="space-y-4 pt-2">
             {/* Allergies */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Allergies
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.allergies')}</span>
+                <InfoButton translationKey="personalInfo.allergiesInfo" label={t('personalInfo.allergies')} />
               </label>
               <Controller
                 control={control}
@@ -1133,7 +1305,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     presets={ALLERGY_PRESETS}
                     value={value}
                     onChange={onChange}
-                    placeholder="Type an allergy and press Enter..."
+                    placeholder={t('personalInfo.allergiesPlaceholder')}
+                    presetType="allergy"
                   />
                 )}
               />
@@ -1141,8 +1314,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Chronic Conditions */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Chronic Conditions
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.chronicConditions')}</span>
+                <InfoButton translationKey="personalInfo.chronicConditionsInfo" label={t('personalInfo.chronicConditions')} />
               </label>
               <Controller
                 control={control}
@@ -1152,7 +1326,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     presets={CHRONIC_CONDITION_PRESETS}
                     value={value}
                     onChange={onChange}
-                    placeholder="Type a condition and press Enter..."
+                    placeholder={t('personalInfo.chronicConditionsPlaceholder')}
+                    presetType="chronic_condition"
                   />
                 )}
               />
@@ -1160,8 +1335,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Current Medications */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Current Medications
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.currentMedications')}</span>
+                <InfoButton translationKey="personalInfo.currentMedicationsInfo" label={t('personalInfo.currentMedications')} />
               </label>
               <Controller
                 control={control}
@@ -1171,7 +1347,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     presets={[]}
                     value={value}
                     onChange={onChange}
-                    placeholder="Type a medication and press Enter..."
+                    placeholder={t('personalInfo.currentMedicationsPlaceholder')}
                   />
                 )}
               />
@@ -1179,8 +1355,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
             {/* Disabilities / Functional Limitations */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Disabilities / Functional Limitations (WHO ICF-aligned)
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                <span>{t('personalInfo.disabilities')}</span>
+                <InfoButton translationKey="personalInfo.disabilitiesInfo" label={t('personalInfo.disabilities')} />
               </label>
               <Controller
                 control={control}
@@ -1190,7 +1367,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     presets={DISABILITY_PRESETS}
                     value={value}
                     onChange={onChange}
-                    placeholder="Type a limitation/disability and press Enter..."
+                    placeholder={t('personalInfo.disabilitiesPlaceholder')}
+                    presetType="disability"
                   />
                 )}
               />
@@ -1203,7 +1381,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
           <div className="bg-background/40 border border-slate-850 p-6 rounded-2xl space-y-4">
             <div className="flex items-center gap-2 text-primary border-b border-border pb-2">
               <Baby className="h-5 w-5" />
-              <h3 className="font-bold text-foreground">Reproductive Health</h3>
+              <h3 className="font-bold text-foreground">{t('personalInfo.sectionReproductiveHealth')}</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               {/* Is Pregnant Checkbox */}
@@ -1223,14 +1401,18 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                     />
                   )}
                 />
-                <span className="text-sm font-semibold text-foreground">Currently Pregnant</span>
+                <span className="text-sm font-semibold text-foreground flex items-center">
+                  <span>{t('personalInfo.isPregnant')}</span>
+                  <InfoButton translationKey="personalInfo.isPregnantInfo" label={t('personalInfo.isPregnant')} />
+                </span>
               </div>
 
               {/* Due Date (conditional) */}
               {isPregnant && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Expected Due Date (Max 9 months out)
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                    <span>{t('personalInfo.pregnancyDueDate')}</span>
+                    <InfoButton translationKey="personalInfo.pregnancyDueDateInfo" label={t('personalInfo.pregnancyDueDate')} />
                   </label>
                   <Controller
                     control={control}
@@ -1274,8 +1456,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
               {/* Gravida */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Number of Pregnancies (Gravida) (0-30)
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                  <span>{t('personalInfo.numberOfPregnancies')}</span>
+                  <InfoButton translationKey="personalInfo.numberOfPregnanciesInfo" label={t('personalInfo.numberOfPregnancies')} />
                 </label>
                 <Controller
                   control={control}
@@ -1292,7 +1475,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                       onBlur={onBlur}
                       onChange={onChange}
                       value={value}
-                      placeholder="e.g. 2"
+                      placeholder={t('personalInfo.numberOfPregnanciesPlaceholder')}
                       className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
                         errors.numberOfPregnancies ? 'border-red-500/80' : 'border-border focus:border-primary'
                       }`}
@@ -1309,8 +1492,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
 
               {/* Parity */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Number of Live Births (Parity) (0-30)
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center">
+                  <span>{t('personalInfo.numberOfLiveBirths')}</span>
+                  <InfoButton translationKey="personalInfo.numberOfLiveBirthsInfo" label={t('personalInfo.numberOfLiveBirths')} />
                 </label>
                 <Controller
                   control={control}
@@ -1338,7 +1522,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ mode, patien
                       onBlur={onBlur}
                       onChange={onChange}
                       value={value}
-                      placeholder="e.g. 2"
+                      placeholder={t('personalInfo.numberOfLiveBirthsPlaceholder')}
                       className={`bg-background border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none transition-all ${
                         errors.numberOfLiveBirths ? 'border-red-500/80' : 'border-border focus:border-primary'
                       }`}

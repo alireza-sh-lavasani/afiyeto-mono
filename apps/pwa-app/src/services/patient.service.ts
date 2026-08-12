@@ -58,9 +58,18 @@ export const usePatientService = () => {
 
   const createPatient = async (patientData: Omit<Patient, '_id' | 'type' | 'createdAt' | 'updatedAt' | 'examinations' | 'tmpPatientId'> & { birthDate: string }): Promise<Patient> => {
     try {
+      let firstName = patientData.firstName || '';
+      let lastName = patientData.lastName || '';
+      if (!firstName && !lastName && (patientData as any).fullName) {
+        const parts = (patientData as any).fullName.trim().split(/\s+/);
+        firstName = parts[0] || '';
+        lastName = parts.slice(1).join(' ') || '';
+      }
+
       // 1. Generate initials and temporary patient ID
       const { namePart, dateKey } = generatePatientIdInitials(
-        patientData.fullName,
+        firstName,
+        lastName,
         patientData.birthDate
       );
       const tmpPatientId = `${namePart}${dateKey}${generateRandomSuffix(7)}`;
@@ -71,6 +80,9 @@ export const usePatientService = () => {
         ...patientData as any,
         _id,
         type: 'patient' as const,
+        firstName,
+        lastName,
+        fullName: `${firstName} ${lastName}`.trim(),
         birthDate: new Date(patientData.birthDate),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -100,9 +112,17 @@ export const usePatientService = () => {
       // Convert date string if provided
       const birthDate = patientData.birthDate ? new Date(patientData.birthDate) : existingPatient.birthDate;
 
+      let fullName = existingPatient.fullName;
+      if (patientData.firstName !== undefined || patientData.lastName !== undefined) {
+        const first = patientData.firstName !== undefined ? patientData.firstName : existingPatient.firstName;
+        const last = patientData.lastName !== undefined ? patientData.lastName : existingPatient.lastName;
+        fullName = `${first || ''} ${last || ''}`.trim();
+      }
+
       const updatedPatient: Patient = {
         ...existingPatient,
         ...patientData as any,
+        fullName,
         birthDate,
         updatedAt: new Date().toISOString(),
       };

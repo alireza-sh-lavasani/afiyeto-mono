@@ -46,8 +46,9 @@ describe('PersonalInfoForm Component Integration', () => {
     render(<PersonalInfoForm mode="create" />);
 
     // Verify key fields are rendered
-    expect(screen.getByPlaceholderText(/Enter Full Name/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Enter National ID Number/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/personalInfo.firstNamePlaceholder/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/personalInfo.lastNamePlaceholder/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/personalInfo.uniqueGovIDPlaceholder/i)).toBeInTheDocument();
     expect(screen.getByText('personalInfo.male')).toBeInTheDocument();
     expect(screen.getByText('personalInfo.female')).toBeInTheDocument();
   });
@@ -61,7 +62,8 @@ describe('PersonalInfoForm Component Integration', () => {
 
     // Should show validation error keys
     await waitFor(() => {
-      expect(screen.getByText(/validation.nameRequired/i)).toBeInTheDocument();
+      expect(screen.getByText(/validation.firstNameRequired/i)).toBeInTheDocument();
+      expect(screen.getByText(/validation.lastNameRequired/i)).toBeInTheDocument();
       expect(screen.getByText(/validation.birthDateRequired/i)).toBeInTheDocument();
     });
 
@@ -72,8 +74,11 @@ describe('PersonalInfoForm Component Integration', () => {
     const { container } = render(<PersonalInfoForm mode="create" />);
 
     // Fill name and select Female to display pregnancy inputs
-    fireEvent.change(screen.getByPlaceholderText(/Enter Full Name/i), {
-      target: { value: 'Alice Johnson' },
+    fireEvent.change(screen.getByPlaceholderText(/personalInfo.firstNamePlaceholder/i), {
+      target: { value: 'Alice' },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/personalInfo.lastNamePlaceholder/i), {
+      target: { value: 'Johnson' },
     });
     fireEvent.change(container.querySelector('input[type="date"]')!, {
       target: { value: '1995-01-01' },
@@ -85,11 +90,11 @@ describe('PersonalInfoForm Component Integration', () => {
 
     // Wait for reproductive health inputs to render
     await waitFor(() => {
-      expect(screen.getAllByPlaceholderText(/e.g. 2/i)[0]).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('personalInfo.numberOfPregnanciesPlaceholder')).toBeInTheDocument();
     });
 
-    const gravidaInput = screen.getAllByPlaceholderText(/e.g. 2/i)[0]; // Gravida
-    const parityInput = screen.getAllByPlaceholderText(/e.g. 2/i)[1];  // Parity
+    const gravidaInput = screen.getByPlaceholderText('personalInfo.numberOfPregnanciesPlaceholder'); // Gravida
+    const parityInput = screen.getByPlaceholderText('personalInfo.numberOfLiveBirthsPlaceholder');  // Parity
 
     // Set invalid obstetric details: Parity (3) > Gravida (2)
     fireEvent.change(gravidaInput, { target: { value: '2' } });

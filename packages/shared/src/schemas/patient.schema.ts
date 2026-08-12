@@ -7,7 +7,9 @@ export const PatientSchema = z.object({
   
   // Real demographic fields matching IPatient
   uniqueGovID: z.string().optional(),
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  fullName: z.string().optional(),
   birthDate: z.union([
     z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid date format' }),
     z.date(),

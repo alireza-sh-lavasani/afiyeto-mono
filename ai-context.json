@@ -1,7 +1,7 @@
 {
   "project": "afiyet",
   "version": "1.0.0",
-  "last_updated": "2026-08-12",
+  "last_updated": "2026-08-13",
   "historical_layout": {
     "root": "C:/projects/afiyet/",
     "repos": {
@@ -16,15 +16,15 @@
     "target_workspace": "C:/projects/afiyet-mono/ (NPM Monorepo)",
     "packages": {
       "packages/shared": "Exports raw Typescript Zod validation schemas & interfaces directly across packages. Standardizes split mandatory patient names (firstName & lastName) with optional computed fullName, and updated generatePatientIdInitials helper.",
-      "apps/pwa-app": "Vite PWA SPA supporting tablet mode (VITE_APP_TARGET=tablet) and web dashboard (VITE_APP_TARGET=dashboard). Includes real-time form autosaving (1-second debounce to PouchDB), validation error toast alerts, 120-year max age limit for DOB, reusable InfoButton popovers for clinical guidelines, dynamic preset chip localization (translatePreset) saving English strings in DB, split name inputs with autosave guards, location card hiding with default background coordinates, complete multi-language support (EN, AR, TI) across forms, previews, and PatientsList.tsx, and ClinicalAiGuideModal for volunteer-friendly clinical guidance.",
+      "apps/pwa-app": "Vite PWA SPA supporting tablet mode (VITE_APP_TARGET=tablet) and web dashboard (VITE_APP_TARGET=dashboard). Includes real-time form autosaving (1-second debounce to PouchDB), validation error toast alerts, 120-year max age limit for DOB, reusable InfoButton popovers for clinical guidelines, dynamic preset chip localization (translatePreset) saving English strings in DB, split name inputs with autosave guards, location card hiding with default background coordinates, complete multi-language support (EN, AR, TI) across forms, previews, and PatientsList.tsx, persistent local PouchDB clinical AI chatbot with floating FAB widget, and theme-aware ClinicalAiGuideModal.",
       "apps/backend": "Lightweight Fastify server with tsx runtime, direct CouchDB changes feed integration for sequential patient ID generation (supporting split firstName/lastName and legacy fullName parsing), Zod validation, and automatic CouchDB CORS setup on boot.",
-      "packages/rag-builder": "High-performance GPU matrix embedding builder (ncbi/MedCPT-Article-Encoder, sqlite-vec, FTS5) with GPU batching (64 items/call) and incremental append mode.",
+      "packages/rag-builder": "High-performance GPU matrix embedding builder (ncbi/MedCPT-Article-Encoder, sqlite-vec, FTS5) with GPU batching (64 items/call), incremental append mode, and serve-ollama.ts CLI script for serving local MedGemma LLM.",
       "packages/rag-eval": "Retrieval evaluation benchmark package using ncbi/MedCPT-Query-Encoder measuring Context Recall@5 and Zod schema compliance."
     },
     "database_transition": {
-      "client": "Realm DB -> PouchDB (browser IndexedDB storage) using single VITE_COUCHDB_BASE_URL variable for LAN target configuration. Deferring initial draft document creation until firstName, lastName, and birthDate are populated to prevent invalid IDs. Includes dynamic seeding of offline afiyet_icd10 (500+ diagnostic entries) and afiyet_custom_entries.",
+      "client": "Realm DB -> PouchDB (browser IndexedDB storage) using single VITE_COUCHDB_BASE_URL variable for LAN target configuration. Deferring initial draft document creation until firstName, lastName, and birthDate are populated to prevent invalid IDs. Includes dynamic seeding of offline afiyet_icd10 (500+ diagnostic entries), afiyet_custom_entries, and afiyet_local_chat (local-only, un-synced chat memory).",
       "server": "MongoDB -> CouchDB. Backend configures afiyet_patients, afiyet_examinations, afiyet_icd10, and afiyet_custom_entries on startup.",
-      "replication": "Replaced manual pako transaction queue sync with native PouchDB-to-CouchDB sync (PouchDB.sync live, retry). Support for manual resync with overlay toast notifications.",
+      "replication": "Replaced manual pako transaction queue sync with native PouchDB-to-CouchDB sync (PouchDB.sync live, retry). afiyet_local_chat is intentionally excluded from CouchDB sync to maintain local tablet privacy.",
       "automatic_server_provisioning": "Fastify backend automatically configures CouchDB CORS endpoints on startup."
     },
     "pwa_offline_constraints": {
@@ -34,11 +34,11 @@
       "locales": {
         "languages": ["en", "ar", "ti"],
         "rtl": ["ar"],
-        "layout": "i18n.ts applies document.documentElement.dir = 'rtl' dynamically. Full translation keys structured across card namespaces (vitalsCard, extendedVitalsCard, rapidTestsCard, clinicalAssessmentCard, reproductiveHealthCard, clinicalPhotosCard, presets)."
+        "layout": "i18n.ts applies document.documentElement.dir = 'rtl' dynamically. Full translation keys structured across card namespaces (vitalsCard, extendedVitalsCard, rapidTestsCard, clinicalAssessmentCard, reproductiveHealthCard, clinicalPhotosCard, presets, chat)."
       }
     },
     "test_suites": {
-      "pwa_tests": "Run via 'npm run test:pwa'. Covers offline PouchDB integration tests, split name validations, and form validation tests with Vitest.",
+      "pwa_tests": "Run via 'npm run test:pwa'. Covers offline PouchDB integration tests, split name validations, chat service CRUD, and form validation tests with Vitest.",
       "rag_tests": "Run via 'npm run test:rag'. Evaluates retrieval recall and clinical response schema validation."
     }
   },
@@ -59,14 +59,29 @@
       "builder_gpu_specs": "Built on Razer Blade Advanced (Intel i7, 32GB RAM, RTX 2070 Super Max-Q) using ONNX Runtime DirectML/CUDA with batching size 64 at 9.7 chunks/sec."
     },
     "mobile_models": {
-      "llm": "MedGemma-4B-IT (medgemma-4b-it-Q4_K_M.gguf, ~2.48 GB GGUF) running locally on Android tablets via llama.cpp native bridge (LlamaPlugin) from /sdcard/Afiyet/models/medgemma-4b-it.gguf.",
+      "llm": "MedGemma-4B-IT (medgemma-4b-it-Q4_K_M.gguf, ~2.48 GB GGUF) running locally on Android tablets via llama.cpp native bridge (LlamaPlugin) from /sdcard/Afiyet/models/medgemma-4b-it.gguf or via local Ollama server (http://localhost:11434).",
       "query_encoder": "ncbi/MedCPT-Query-Encoder (768-dim float vectors) running ONNX in-app transformer runtime."
+    },
+    "local_chat_system": {
+      "storage": "Local-only PouchDB database (afiyet_local_chat) persisting consultation history per tablet without remote CouchDB replication.",
+      "ui_widget": "FloatingChatWidget.tsx with ChatScope UI kit, FAB pulse animation, side drawer, react-markdown rendering, and clean theme support.",
+      "title_summarization": "Asynchronously summarizes user's first query into short 3-6 word title using LLM without including AI answer text.",
+      "icon_cleanliness": "Removed all avatar/human/computer icons from chat bubbles and sidebar lists.",
+      "theme_styling": "Full Light Mode and Dark Mode support with high-specificity CSS overrides in index.css for ConversationHeader, MessageInput, and chat bubbles."
+    },
+    "serve_ollama_command": {
+      "script": "packages/rag-builder/serve-ollama.ts triggered via 'npm run serve-ollama'.",
+      "features": "Validates MedGemma weights file, checks Ollama CLI, enables CORS (OLLAMA_ORIGINS=*), generates Modelfile, registers medgemma-4b, and serves API on http://localhost:11434/v1/chat/completions."
+    },
+    "offline_error_handling": {
+      "strict_model_requirement": "Simulation fallback text is completely removed. OfflineRAGService throws explicit markdown error messages guiding users to start 'npm run serve-ollama' (web) or 'npm run android:push-model' (tablet) if no local LLM model is reachable."
     },
     "android_tablet_deployment": {
       "package_id": "org.afiyet.mobile",
       "database_bundling": "afiyet_med_knowledge.db (402 MB) is bundled into APK assets (assets/databases/afiyet_med_knowledge.db) and auto-unpacked on initial boot by MainActivity.java into /data/data/org.afiyet.mobile/databases/afiyet_med_knowledge.db.",
       "aapt_options": "noCompress 'db' in build.gradle ensures 402 MB database is packaged uncompressed for instant memory-mapped file access and zero AAPT heap memory issues.",
       "npm_commands": {
+        "serve-ollama": "Serves MedGemma GGUF model via local Ollama server with CORS enabled",
         "android:build": "Builds tablet PWA, syncs Capacitor, preps vector DB in APK assets, and compiles app-debug.apk",
         "android:install": "Installs compiled app-debug.apk onto connected tablet/emulator via ADB",
         "android:push-model": "Creates /sdcard/Afiyet/models/ and pushes MedGemma GGUF (2.48 GB) and MedCPT Query Encoder ONNX (435 MB) over ADB",
@@ -76,6 +91,8 @@
     },
     "volunteer_friendly_ui": {
       "component": "apps/pwa-app/src/components/ClinicalAiGuideModal.tsx",
+      "theme": "Fully theme-aware supporting both Light Mode (slate/teal/primary) and Dark Mode (bg-background text-foreground bg-card border-border).",
+      "comprehensive_fields": "Aggregates patient demographics (age, sex) and full examination vitals (temp, BP, HR, RR, SpO2, blood sugar, weight, height, MUAC, AVPU), physical symptoms, chief complaint, ICD-10 codes, and clinical notes to build vector search queries.",
       "formatting": "Presents clear plain-English step-by-step guidance first, formal clinical medical terms in parentheses, medication notes (e.g. re-dosing if patient vomits), and explicit hospital referral red-flag warnings.",
       "triggers": "Accessible from active ExaminationForm.tsx and submitted VisitSummary.tsx via 'Get AI Guidance' button."
     }

@@ -52,11 +52,12 @@ describe('ExaminationForm Component Integration', () => {
     });
   });
 
-  it('renders clinical vital sign inputs correctly', () => {
+  it('renders clinical vital sign inputs correctly', async () => {
     render(<ExaminationForm mode="create" patientId="patient123" idType={EIdType.PERMANENT} />);
 
-    // Verify key fields are rendered
-    expect(screen.getByPlaceholderText('examinationForm.vitalsCard.temperaturePlaceholder')).toBeInTheDocument(); // Temperature
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('examinationForm.vitalsCard.temperaturePlaceholder')).toBeInTheDocument();
+    });
     expect(screen.getByPlaceholderText('examinationForm.vitalsCard.bpSystolicPlaceholder')).toBeInTheDocument();  // Systolic
     expect(screen.getByPlaceholderText('examinationForm.vitalsCard.bpDiastolicPlaceholder')).toBeInTheDocument();   // Diastolic
     expect(screen.getByPlaceholderText('examinationForm.vitalsCard.heartRatePlaceholder')).toBeInTheDocument();   // Heart Rate

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { EIdType, ICD10_CODES, IICD10Entry } from '@afiyet/shared';
 import { useExaminationService } from '../services/examination.service.ts';
+import { usePatientService } from '../services/patient.service.ts';
 import { zobas, subZobas, EZoba } from './zobas.ts';
 import { InfoButton } from './InfoButton.tsx';
 import {
@@ -319,6 +320,22 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { createExamination, updateExamination } = useExaminationService(patientId, idType);
+  const { getPatientById } = usePatientService();
+  const [patientDoc, setPatientDoc] = useState<any>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (patientId) {
+      getPatientById(patientId)
+        .then((p) => {
+          if (isMounted && p) setPatientDoc(p);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [patientId, getPatientById]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedZoba, setSelectedZoba] = useState<EZoba | ''>(
@@ -2498,14 +2515,56 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
         onClose={() => setIsAiGuideOpen(false)}
         examData={{
           patientId,
+          age: patientDoc?.birthDate
+            ? Math.floor((new Date().getTime() - new Date(patientDoc.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+            : undefined,
+          sex: patientDoc?.gender,
           vitals: {
             temperature: watch('temperature'),
             bloodPressure: `${watch('bloodPressureSystolic') || ''}/${watch('bloodPressureDiastolic') || ''}`,
             heartRate: watch('heartRate'),
-            respiratoryRate: watch('respiratoryRate')
+            respiratoryRate: watch('respiratoryRate'),
+            oxygenSaturation: watch('oxygenSaturation'),
+            bloodSugar: watch('bloodSugar'),
+            weight: watch('weight'),
+            height: watch('height'),
+            muac: watch('muac'),
+            avpu: watch('consciousnessLevel'),
           },
+          symptoms: [
+            watch('hasFever') && 'Fever',
+            watch('hasHeadache') && 'Headache',
+            watch('hasDizziness') && 'Dizziness',
+            watch('hasNausea') && 'Nausea',
+            watch('hasFatigue') && 'Fatigue',
+            watch('hasWeightLoss') && 'Weight Loss',
+            watch('hasSweating') && 'Sweating',
+            watch('hasCough') && 'Cough',
+            watch('hasShortnessOfBreath') && 'Shortness of Breath',
+            watch('hasSoreThroat') && 'Sore Throat',
+            watch('hasChestPain') && 'Chest Pain',
+            watch('hasVomiting') && 'Vomiting',
+            watch('hasDiarrhea') && 'Diarrhea',
+            watch('hasStomachPain') && 'Stomach Pain',
+            watch('hasConstipation') && 'Constipation',
+            watch('hasAppetiteLoss') && 'Appetite Loss',
+            watch('hasMusclePain') && 'Muscle Pain',
+            watch('hasPainfulUrination') && 'Painful Urination',
+            watch('hasFrequentUrination') && 'Frequent Urination',
+            watch('hasBloodInUrine') && 'Blood in Urine',
+            watch('hasEarPain') && 'Ear Pain',
+            watch('hasHearingLoss') && 'Hearing Loss',
+            watch('hasNasalCongestion') && 'Nasal Congestion',
+            watch('hasRunnyNose') && 'Runny Nose',
+            watch('hasSneezing') && 'Sneezing',
+            watch('hasEyePain') && 'Eye Pain',
+            watch('hasRedEye') && 'Red Eye',
+            watch('hasBlurredVision') && 'Blurred Vision',
+            watch('hasVisionLoss') && 'Vision Loss',
+          ].filter(Boolean) as string[],
           chiefComplaint: watch('clinicalAssessment.chiefComplaint'),
-          notes: watch('clinicalAssessment.clinicalNotes')
+          icd10Codes: watch('clinicalAssessment.icdCodes'),
+          notes: watch('clinicalAssessment.clinicalNotes'),
         }}
       />
     </div>

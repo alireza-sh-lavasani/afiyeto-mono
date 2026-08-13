@@ -157,62 +157,77 @@ export class OfflineRAGService {
 
       try {
         await Llama.chatCompletion({ messages, stream: true });
+      } catch (err: any) {
+        throw new Error(
+          `⚠️ **Native LLM Model Error on Android**\n\n` +
+          `Failed to execute local llama.cpp inference. Ensure the MedGemma model weights are present at \`/sdcard/Afiyet/models/medgemma-4b-it.gguf\`.\n\n` +
+          `**To fix:** Run \`npm run android:push-model\` over ADB.`
+        );
       } finally {
         listener.remove();
       }
     } else {
-      // Web Mode: Hit local sidecar API if available, else run stream simulation
-      try {
-        const res = await fetch('http://localhost:5001/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'medgemma-4b-it',
-            messages,
-            stream: true
-          })
-        });
+      // Web Mode: Try local Ollama (11434) or sidecar API (5001), else run stream simulation
+      const endpoints = [
+        { url: 'http://localhost:11434/v1/chat/completions', model: 'medgemma-4b' },
+        { url: 'http://localhost:5001/v1/chat/completions', model: 'medgemma-4b-it' },
+      ];
 
-        if (!res.ok) throw new Error('Localhost sidecar offline');
-        
-        const reader = res.body?.getReader();
-        if (!reader) throw new Error('No readable stream body');
+      let streamHandled = false;
 
-        const decoder = new TextDecoder('utf-8');
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n').filter(l => l.trim().startsWith('data: '));
-          for (const line of lines) {
-            const jsonStr = line.replace(/^data: /, '').trim();
-            if (jsonStr === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const token = parsed.choices[0].delta.content;
-              if (token) onToken(token);
-            } catch (err) {}
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: endpoint.model,
+              messages,
+              stream: true,
+            }),
+          });
+
+          if (!res.ok) continue;
+
+          const reader = res.body?.getReader();
+          if (!reader) continue;
+
+          const decoder = new TextDecoder('utf-8');
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n').filter((l) => l.trim().startsWith('data: '));
+            for (const line of lines) {
+              const jsonStr = line.replace(/^data: /, '').trim();
+              if (jsonStr === '[DONE]') continue;
+              try {
+                const parsed = JSON.parse(jsonStr);
+                const token = parsed.choices[0]?.delta?.content;
+                if (token) onToken(token);
+              } catch (err) {}
+            }
           }
+
+          streamHandled = true;
+          break;
+        } catch (err) {
+          // Endpoint unavailable, try next
         }
-      } catch (err) {
-        console.warn('[RAG Service] Localhost LLM offline. Running browser clinical simulation stream.');
-        await this.runSimulationStream(messages, onToken);
       }
-    }
-  }
 
-  private async runSimulationStream(
-    messages: Array<{ role: string; content: string }>,
-    onToken: (token: string) => void
-  ): Promise<void> {
-    const prompt = messages[messages.length - 1].content;
-    let text = `### Clinical Diagnostic Summary (Offline Web Mode)\n\nBased on the patient examination and retrieved StatPearls/WHO clinical guidelines, the patient shows symptoms consistent with severe infectious/tropical illness. Immediate administration of first-line antimalarial (Coartem) and ORS rehydration is advised.`;
-
-    const tokens = text.split(' ');
-    for (const token of tokens) {
-      onToken(token + ' ');
-      await new Promise(r => setTimeout(r, 40));
+      if (!streamHandled) {
+        throw new Error(
+          `⚠️ **Local LLM Server Offline**\n\n` +
+          `The local AI model server is currently not running. The clinical AI assistant cannot generate answers without an active LLM model.\n\n` +
+          `**How to fix:**\n` +
+          `1. Open your terminal in the project root directory.\n` +
+          `2. Run the Ollama model server command:\n\n` +
+          `\`\`\`bash\nnpm run serve-ollama\n\`\`\`\n\n` +
+          `*(If the MedGemma model file is not downloaded yet, run \`npm run download-models\` first).*`
+        );
+      }
     }
   }
 }

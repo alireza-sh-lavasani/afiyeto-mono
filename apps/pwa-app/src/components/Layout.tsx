@@ -4,6 +4,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { ESupportedLanguages, languagesDisplayNames } from '../languages/language.enums.ts';
 import { useBackendConnection } from '../hooks/useBackendConnection.ts';
 import { usePouchSyncStatus } from '../hooks/usePouchSyncStatus.ts';
+import { FloatingChatWidget } from './FloatingChatWidget.tsx';
 import { 
   Activity, 
   Users, 
@@ -263,7 +264,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Toast Notification overlay */}
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-55 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-0 ${
+        <div className={`fixed bottom-20 right-6 z-55 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-0 ${
           toast.type === 'success' 
             ? 'bg-card border-emerald-500/30 text-emerald-500 shadow-emerald-950/10' 
             : 'bg-card border-red-500/30 text-red-500 shadow-red-950/10'
@@ -276,6 +277,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <span className="text-xs font-semibold text-foreground">{toast.message}</span>
         </div>
       )}
+
+      {/* Floating Local RAG AI Chat Widget */}
+      <FloatingChatWidget />
     </div>
   );
 };

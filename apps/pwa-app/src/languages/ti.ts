@@ -595,5 +595,25 @@ export default {
       "mental_health_disability": "ኣእምሮኣዊ ስንክልና",
       "developmental_disability": "ናይ ዕብየት ስንክልና"
     }
+  },
+  "chat": {
+    "fabLabel": "AI ምኽሪ",
+    "openTooltip": "ክሊኒካዊ AI ምኽሪ ኸፊት",
+    "headerTitle": "Afiyet ክሊኒካዊ AI ሓጋዚ",
+    "headerSubtitle": "MedGemma LLM + ናይ መወከሲ መምርሒታት",
+    "newChat": "ሓድሽ ምኽሪ",
+    "new": "ሓድሽ",
+    "pastConsultations": "ዝሓለፉ ምኽርታት",
+    "noThreads": "ዝሓለፈ ዝተመዝገበ ምኽሪ የለን።",
+    "emptyThread": "ባዶ ምኽሪ",
+    "deleteThread": "ምኽሪ ደምስስ",
+    "confirmDelete": "ነዚ ናይ ምኽሪ ታሪኽ ክትደمسሶ ርግጸኛ ዶ?",
+    "ragActiveStatus": "ናይ ከባቢ መዘከርታን መወከሲን ነቃሕ እዩ",
+    "aiThinking": "Afiyet AI ነቲ መምርሒ ይተንትን ኣሎ...",
+    "welcomeTitle": "ንሕክምናዊ AI ሕቶ ሕተቱ",
+    "welcomeDesc": "ዝኾነ ሕክምናዊ ሕቶ ሕተቱ። እቲ ናይ ከባቢ መሳርሒ ካብ መዘከርታኡ መወከሲታት ከውጽእ እዩ።",
+    "inputPlaceholder": "ሕክምናዊ ሕቶ ጽሓፉ (ንኣብነት ናይ ኮኣርተም ዓቐን ን12kg ቆልዓ)...",
+    "citations": "መወከሲታት:",
+    "close": "ዓጽው"
   }
 };

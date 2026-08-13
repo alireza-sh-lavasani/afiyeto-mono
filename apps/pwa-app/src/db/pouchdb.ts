@@ -6,6 +6,7 @@ export const patientsDb = new PouchDB<Patient>('afiyet_patients', { auto_compact
 export const examinationsDb = new PouchDB<Examination>('afiyet_examinations', { auto_compaction: true });
 export const customEntriesDb = new PouchDB<ICustomEntry>('afiyet_custom_entries', { auto_compaction: true });
 export const icd10Db = new PouchDB<IICD10Entry & { _id: string; _rev?: string }>('afiyet_icd10', { auto_compaction: true });
+export const localChatDb = new PouchDB<any>('afiyet_local_chat', { auto_compaction: true });
 
 // 2. Resolve remote CouchDB Base URL from environment variables
 const COUCHDB_BASE_URL = import.meta.env.VITE_COUCHDB_BASE_URL || 'http://192.168.0.113:5984';

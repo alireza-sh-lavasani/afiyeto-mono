@@ -595,5 +595,25 @@ export default {
       "mental_health_disability": "Mental health disability",
       "developmental_disability": "Developmental disability"
     }
+  },
+  "chat": {
+    "fabLabel": "AI Consultation",
+    "openTooltip": "Open Clinical AI Consultation",
+    "headerTitle": "Afiyet Clinical AI Assistant",
+    "headerSubtitle": "MedGemma LLM + MedCPT Guideline Retrieval",
+    "newChat": "New Consultation",
+    "new": "New",
+    "pastConsultations": "Consultations",
+    "noThreads": "No past consultations recorded.",
+    "emptyThread": "Empty consultation",
+    "deleteThread": "Delete Consultation",
+    "confirmDelete": "Are you sure you want to delete this consultation history?",
+    "ragActiveStatus": "Offline Local Memory & Guidelines Active",
+    "aiThinking": "Afiyet AI is analyzing guidelines...",
+    "welcomeTitle": "Ask Afiyet Clinical AI",
+    "welcomeDesc": "Ask any medical question. The local LLM will retrieve gold-standard StatPearls & WHO guidelines from tablet memory.",
+    "inputPlaceholder": "Type clinical question (e.g. Coartem dosage for 12kg child)...",
+    "citations": "Citations:",
+    "close": "Close"
   }
 };

@@ -1,3 +1,5 @@
+@import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -89,4 +91,149 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/40;
+}
+
+/* ChatScope UI Kit Dark Mode Deep Overrides */
+.dark .cs-main-container,
+.dark .cs-chat-container,
+.dark .cs-message-list,
+.dark .cs-message-list__scroll-wrapper,
+.dark .cs-sidebar,
+.dark .cs-conversation-header,
+.dark .cs-message-input,
+.dark .cs-message-input__content-editor-wrapper,
+.dark .cs-message-input__content-editor-container,
+.dark .cs-message-input__content-editor,
+.dark .scrollbar-container {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Header styling - Light Mode */
+.cs-conversation-header,
+.cs-conversation-header * {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.cs-conversation-header__user-name {
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+.cs-conversation-header__info {
+  color: #64748b !important;
+}
+
+/* Header styling - Dark Mode */
+.dark .cs-conversation-header,
+.dark .cs-conversation-header * {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .cs-conversation-header__user-name {
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+.dark .cs-conversation-header__info {
+  color: #94a3b8 !important;
+}
+
+/* Message bubbles - Incoming (Assistant) */
+.dark .cs-message--incoming .cs-message__content-wrapper,
+.dark .cs-message--incoming .cs-message__content {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Message bubbles - Outgoing (User) */
+.dark .cs-message--outgoing .cs-message__content-wrapper,
+.dark .cs-message--outgoing .cs-message__content {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Make prose text inside message bubbles inherit color */
+.dark .cs-message__content .prose,
+.dark .cs-message__content .prose p,
+.dark .cs-message__content .prose li,
+.dark .cs-message__content .prose h1,
+.dark .cs-message__content .prose h2,
+.dark .cs-message__content .prose h3,
+.dark .cs-message__content .prose strong,
+.dark .cs-message__content .prose em,
+.dark .cs-message__content .prose code {
+  color: inherit !important;
+}
+
+/* Message input container at bottom */
+.dark .cs-message-input {
+  background-color: #0f172a !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .cs-message-input__content-editor-wrapper,
+.dark .cs-message-input__content-editor-container {
+  background-color: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 0.5rem !important;
+}
+
+.dark .cs-message-input__content-editor {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+.dark .cs-message-input__content-editor[data-placeholder]:empty:before,
+.dark [data-placeholder]:empty:before {
+  color: #94a3b8 !important;
+}
+
+/* Sidebar conversation items */
+.dark .cs-conversation {
+  background-color: transparent !important;
+}
+
+.dark .cs-conversation.cs-conversation--active,
+.dark .cs-conversation:hover {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.dark .cs-conversation__name {
+  color: #f8fafc !important;
+}
+
+.dark .cs-conversation__info {
+  color: #94a3b8 !important;
+}
+
+/* Typing indicator */
+.dark .cs-typing-indicator,
+.dark .cs-typing-indicator__content,
+.dark .cs-typing-indicator__text {
+  background-color: transparent !important;
+  color: #94a3b8 !important;
+}
+
+/* Completely hide all human & computer icons / avatars */
+.cs-avatar,
+.cs-message__avatar,
+.cs-conversation__avatar,
+.dark .cs-avatar,
+.dark .cs-message__avatar,
+.dark .cs-conversation__avatar {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }

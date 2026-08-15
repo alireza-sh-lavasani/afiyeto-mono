@@ -16,8 +16,9 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ClinicalAiGuideModal } from './ClinicalAiGuideModal';
+import { usePatientService } from '../services/patient.service';
 
 interface VisitSummaryProps {
   examination: Examination;
@@ -113,6 +114,23 @@ export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
     },
   ];
 
+  const { getPatientById } = usePatientService();
+  const [patientDoc, setPatientDoc] = useState<any>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (examination?.patientId) {
+      getPatientById(examination.patientId)
+        .then((p) => {
+          if (isMounted && p) setPatientDoc(p);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [examination?.patientId, getPatientById]);
+
   if (!examination) {
     return <div className="text-center py-6 text-muted-foreground">Loading visit summary details...</div>;
   }
@@ -138,6 +156,81 @@ export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
     typingPerformed;
 
   return (
+    <div className="space-y-6">
+      {/* Visit Details Header */}
+      <div className="p-6 bg-card border border-border rounded-2xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-primary/10 rounded-xl text-primary border border-primary/20">
+              <Stethoscope className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                {t('visitSummary.title', { defaultValue: 'Clinical Visit Summary' })}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {moment(examination.createdAt).format('DD MMMM YYYY, HH:mm')}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsAiGuideOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-300 font-bold rounded-xl border border-teal-500/30 transition-all text-xs shadow-sm"
+          >
+            <Sparkles className="w-4 h-4 text-teal-500" />
+            <span>AI Clinical Decision Guide</span>
+          </button>
+        </div>
+      </div>
+
+      <ClinicalAiGuideModal
+        isOpen={isAiGuideOpen}
+        onClose={() => setIsAiGuideOpen(false)}
+        examData={{
+          patientId: examination.patientId || '',
+          fullName: patientDoc ? `${patientDoc.firstName || ''} ${patientDoc.lastName || ''}`.trim() : undefined,
+          age: patientDoc?.birthDate
+            ? Math.floor((new Date().getTime() - new Date(patientDoc.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+            : undefined,
+          sex: patientDoc?.gender,
+          uniqueGovID: patientDoc?.uniqueGovID,
+          education: patientDoc?.education,
+          maritalStatus: patientDoc?.maritalStatus,
+          occupation: patientDoc?.occupation,
+          ethnicity: patientDoc?.ethnicity,
+          nationality: patientDoc?.nationality,
+          location: patientDoc ? [patientDoc.residenceZoba, patientDoc.residenceSubZoba, patientDoc.residenceVillage].filter(Boolean).join(', ') : undefined,
+          householdSize: patientDoc?.householdSize,
+          waterSource: patientDoc?.waterSource,
+          sanitationType: patientDoc?.sanitationType,
+          bloodType: patientDoc?.bloodType,
+          allergies: patientDoc?.allergies,
+          chronicConditions: patientDoc?.chronicConditions,
+          currentMedications: patientDoc?.currentMedications,
+          disabilities: patientDoc?.disabilities,
+          isPregnant: patientDoc?.isPregnant,
+          pregnancyDueDate: patientDoc?.pregnancyDueDate,
+          gravida: patientDoc?.numberOfPregnancies,
+          parity: patientDoc?.numberOfLiveBirths,
+          vitals: {
+            temperature: examination.vitals?.temperature ? String(examination.vitals.temperature) : undefined,
+            bloodPressure: `${examination.vitals?.systolicBP || ''}/${examination.vitals?.diastolicBP || ''}`,
+            heartRate: examination.vitals?.heartRate ? String(examination.vitals.heartRate) : undefined,
+            respiratoryRate: examination.vitals?.respiratoryRate ? String(examination.vitals.respiratoryRate) : undefined,
+            oxygenSaturation: examination.vitals?.oxygenSaturation ? String(examination.vitals.oxygenSaturation) : undefined,
+            bloodSugar: examination.vitals?.bloodSugar ? String(examination.vitals.bloodSugar) : undefined,
+            weight: examination.vitals?.weight ? String(examination.vitals.weight) : undefined,
+            height: examination.vitals?.height ? String(examination.vitals.height) : undefined,
+            muac: examination.vitals?.muac ? String(examination.vitals.muac) : undefined,
+            capillaryRefill: examination.vitals?.capillaryRefillTime ? String(examination.vitals.capillaryRefillTime) : undefined,
+            avpu: examination.vitals?.consciousnessLevel ? String(examination.vitals.consciousnessLevel) : undefined,
+          },
+          symptoms: examination.symptoms ? Object.entries(examination.symptoms).filter(([_, v]) => Boolean(v)).map(([k]) => k.replace(/^has/, '')) : [],
+          chiefComplaint: examination.clinicalAssessment?.chiefComplaint,
+          icd10Codes: examination.clinicalAssessment?.icdCodes,
+          notes: examination.clinicalAssessment?.clinicalNotes
+        }}
+      />
     <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-xl space-y-8">
       {/* 1. Location details */}
       <div className="space-y-4">
@@ -783,6 +876,7 @@ export const VisitSummary: React.FC<VisitSummaryProps> = ({ examination }) => {
           notes: examination.clinicalAssessment?.clinicalNotes
         }}
       />
+    </div>
     </div>
   );
 };

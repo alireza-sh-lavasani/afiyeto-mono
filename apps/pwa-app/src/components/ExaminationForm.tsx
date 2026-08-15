@@ -2515,10 +2515,30 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
         onClose={() => setIsAiGuideOpen(false)}
         examData={{
           patientId,
+          fullName: patientDoc ? `${patientDoc.firstName || ''} ${patientDoc.lastName || ''}`.trim() : undefined,
           age: patientDoc?.birthDate
             ? Math.floor((new Date().getTime() - new Date(patientDoc.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
             : undefined,
           sex: patientDoc?.gender,
+          uniqueGovID: patientDoc?.uniqueGovID,
+          education: patientDoc?.education,
+          maritalStatus: patientDoc?.maritalStatus,
+          occupation: patientDoc?.occupation,
+          ethnicity: patientDoc?.ethnicity,
+          nationality: patientDoc?.nationality,
+          location: patientDoc ? [patientDoc.residenceZoba, patientDoc.residenceSubZoba, patientDoc.residenceVillage].filter(Boolean).join(', ') : undefined,
+          householdSize: patientDoc?.householdSize,
+          waterSource: patientDoc?.waterSource,
+          sanitationType: patientDoc?.sanitationType,
+          bloodType: patientDoc?.bloodType,
+          allergies: patientDoc?.allergies,
+          chronicConditions: patientDoc?.chronicConditions,
+          currentMedications: patientDoc?.currentMedications,
+          disabilities: patientDoc?.disabilities,
+          isPregnant: patientDoc?.isPregnant,
+          pregnancyDueDate: patientDoc?.pregnancyDueDate,
+          gravida: patientDoc?.numberOfPregnancies,
+          parity: patientDoc?.numberOfLiveBirths,
           vitals: {
             temperature: watch('temperature'),
             bloodPressure: `${watch('bloodPressureSystolic') || ''}/${watch('bloodPressureDiastolic') || ''}`,
@@ -2529,6 +2549,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
             weight: watch('weight'),
             height: watch('height'),
             muac: watch('muac'),
+            capillaryRefill: watch('capillaryRefillTime'),
             avpu: watch('consciousnessLevel'),
           },
           symptoms: [
@@ -2549,6 +2570,9 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
             watch('hasConstipation') && 'Constipation',
             watch('hasAppetiteLoss') && 'Appetite Loss',
             watch('hasMusclePain') && 'Muscle Pain',
+            watch('hasJointPain') && 'Joint Pain',
+            watch('hasBackPain') && 'Back Pain',
+            watch('hasNeckPain') && 'Neck Pain',
             watch('hasPainfulUrination') && 'Painful Urination',
             watch('hasFrequentUrination') && 'Frequent Urination',
             watch('hasBloodInUrine') && 'Blood in Urine',
